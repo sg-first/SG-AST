@@ -9,6 +9,8 @@ public:
     map<string,Variable*> variableList;
     map<string,Function*> functionList;
     vector<Scope*> sonScope;
+    Scope* fatherScope;
+    Scope(Scope* fatherScope=nullptr):fatherScope(fatherScope){}
 
     void addValue(string name) {this->variableList[name]=new Variable();}
     void addValue(string name,Variable* var) {this->variableList[name]=var;}

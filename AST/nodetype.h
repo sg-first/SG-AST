@@ -139,7 +139,7 @@ public:
     Function(unsigned int parnum,ProNode* pronode=nullptr,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
     Function(unsigned int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
         parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),VLP(VLP),iscanBE(true){} //调用到函数接口
-    ~Function() {delete pronode;}
+    ~Function();
 
     ProNode* getFunBody() {return this->pronode;}
     unsigned int getParnum() {return this->parnum;}

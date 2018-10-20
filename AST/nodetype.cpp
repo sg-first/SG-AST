@@ -227,19 +227,32 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
         {
             recursionEval(funbody.at(i));
             if(funbody.at(i)->isRet())
+            {
+                this->unbindFormalPar();
                 return funbody.at(i);
+            }
         }
         //前面都不是返回值，最后一个是
         BasicNode* lastnode=funbody.at(funbody.size()-1);
         if(lastnode==nullptr)
+        {
+            this->unbindFormalPar();
             return nullptr;
+        }
         else
         {
             recursionEval(lastnode);
+            this->unbindFormalPar();
             return lastnode;
         }
-        this->unbindFormalPar();
     }
+}
+
+Function::~Function()
+{
+    delete this->pronode;
+    for(VarReference* i:this->formalParList)
+        delete i;
 }
 
 void Function::addFormalPar(VarReference *var)
