@@ -131,12 +131,12 @@ private:
     BE BEfun;
     bool iscanBE=false;
     //关于pro求值
-    ProNode* pronode; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个ret路子可能是错的）
+    ProNode* pronode=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个ret路子可能是错的）
     vector<VarReference*>formalParList; //形参列表，持有所有权。（warn:用了这种方法将很难并行化，一个函数实体同时只能被一组实参占用）
     void unbindFormalPar();
     void bindFormalPar(vector<BasicNode*>&sonNode);
 public:
-    Function(unsigned int parnum,ProNode* pronode=nullptr,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
+    Function(unsigned int parnum,ProNode* pronode,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
     Function(unsigned int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
         parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),VLP(VLP),iscanBE(true){} //调用到函数接口
     ~Function();
