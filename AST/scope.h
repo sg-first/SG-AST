@@ -12,7 +12,7 @@ public:
     Scope* fatherScope;
     Scope(Scope* fatherScope=nullptr):fatherScope(fatherScope){}
 
-    void addValue(string name) {this->variableList[name]=new Variable();}
-    void addValue(string name,Variable* var) {this->variableList[name]=var;}
-    void addFunction(string name,Function* fun) {this->functionList[name]=fun;}
+    void addValue(string name);
+    void addValue(string name,Variable* var);
+    void addFunction(string name,Function* fun);
 };
