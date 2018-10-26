@@ -168,5 +168,6 @@ public:
 
     bool haveEntity() {return this->funEntity!=nullptr;}
     void setEntity(Function* funEntity) {this->funEntity=funEntity;}
+    Function* getEntity(){return this->funEntity;}
     ProNode* getFunBody() {return this->funEntity->getFunBody();}
 };
