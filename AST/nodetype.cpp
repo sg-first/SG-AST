@@ -250,8 +250,7 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
 
 Function::~Function()
 {
-    if(this->pronode!=nullptr)
-        delete this->pronode;
+    delete this->pronode;
     for(VarReference* i:this->formalParList)
         delete i;
 }
