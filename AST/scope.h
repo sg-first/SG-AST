@@ -17,6 +17,8 @@ public:
     void addVariable(string name);
     void addVariable(string name,Variable* var);
     void addFunction(string name,Function* fun);
+    bool haveVariable(string name) {return this->variableList[name]!=0;}
+    bool haveFunction(string name) {return this->functionList[name]!=0;}
     //直接删除实体，在已经将所有实体引用在树中清空时使用（目前还没看到有什么用）
     //void deleteVariable(string name);
     //void deleteFunction(string name);
