@@ -2,10 +2,9 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include "marco.h"
+#include "excep.h"
 using namespace std;
-#define READABLEcodegen
-
-enum nodeType{Num,String,Var,Pro,Fun,VarRef};
 
 class BasicNode //不可直接创建对象
 {
@@ -32,7 +31,7 @@ protected:
     double num;
 public:
     virtual int getType() {return Num;}
-    virtual void addNode(BasicNode *node) {throw string("NumNode have no sonNode");}
+    virtual void addNode(BasicNode *node) {throw addSonExcep(Num);}
     virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     NumNode(double num) {this->num=num;}
     NumNode(NumNode* node):num(node->num){}
@@ -47,7 +46,7 @@ protected:
     string str;
 public:
     virtual int getType() {return String;}
-    virtual void addNode(BasicNode *node) {throw string("String have no sonNode");}
+    virtual void addNode(BasicNode *node) {throw addSonExcep(String);}
     virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
     StringNode(string str) {this->str=str;}
     StringNode(StringNode* node):str(node->str){}
@@ -67,7 +66,7 @@ protected:
     void assignmentChecking(BasicNode* val);
 public:
     virtual int getType() {return Var;}
-    virtual void addNode(BasicNode* node) {throw string("VarNode have no sonNode");}
+    virtual void addNode(BasicNode* node) {throw addSonExcep(Var);}
     virtual BasicNode* eval();
     virtual ~VarNode();
     VarNode(int valtype=-1);
@@ -80,7 +79,7 @@ public:
     void setBorrowVal(BasicNode* val); //直接对值进行赋值，用这个不转移所有权（一般赋值为变量指针用）
     void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
     void clearVal();
-    #ifdef READABLEcodegen
+    #ifdef READABLEGEN
     string NAME;
     #endif
 };
@@ -100,7 +99,7 @@ protected:
     void setBorrowVal(BasicNode* val);
 public:
     virtual int getType() {return VarRef;}
-    virtual void addNode(BasicNode* node) {throw string("VarRefNode have no sonNode");}
+    virtual void addNode(BasicNode* node) {throw addSonExcep(VarRef);}
     virtual ~VarRefNode();
     virtual BasicNode* eval(); //eval结果是目前形参绑定到的实参
     VarRefNode(int valtype=-1);
@@ -117,7 +116,7 @@ class ProNode : public BasicNode
 {
 public:
     virtual int getType() {return Pro;}
-    virtual BasicNode* eval() {throw string("ProNode cannot be eval");}
+    virtual BasicNode* eval() {throw cannotEvalNodeExcep();}
 
     //BasicNode* getHeadNode() {return this->sonNode.at(0);}
     BasicNode* getSen(int sub) {return this->sonNode.at(sub);}
@@ -150,7 +149,7 @@ public:
     bool isVLP() {return this->VLP;}
     void addFormalPar(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);
-    #ifdef READABLEcodegen
+    #ifdef READABLEGEN
     string NAME;
     #endif
 };

@@ -28,4 +28,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 HEADERS += \
     AST/funinterface.h \
     AST/nodetype.h \
-    AST/scope.h
+    AST/scope.h \
+    AST/marco.h \
+    AST/excep.h

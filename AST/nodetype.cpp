@@ -50,9 +50,9 @@ VarNode::~VarNode()
 void VarNode::assignmentChecking(BasicNode *val)
 {
     if(isNotAssignable(val))
-        throw string("Type of val cannot be used as value");
+        throw cannotAssignedExcep();
     if(this->typeRestrictFlag&&val->getType()!=this->valtype)
-        throw string("type mismatch");
+        throw assignedTypeMismatchExcep();
 }
 
 void VarNode::setVal(BasicNode* val)
@@ -75,7 +75,7 @@ void VarNode::setBorrowVal(BasicNode *val)
 void VarNode::setVarVal(VarNode *node)
 {
     if(node->isEmpty())
-        throw string("Variable do not have values");
+        throw unassignedAssignedExcep();
     BasicNode* oriVal=node->eval();
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
     if(isLiteral(oriVal))
@@ -88,7 +88,7 @@ void VarNode::setVarVal(VarNode *node)
 BasicNode* VarNode::eval()
 {
     if(this->isEmpty())
-        throw string("Variable do not have values");
+        throw unassignedEvalExcep();
     else
         return this->val;
     //注意，多级指针也只会解包一次。不过从返回值基本无法判断返回的是自身还是自身的变量指针值，所以先前需要getValType进行判断
@@ -128,7 +128,7 @@ void VarRefNode::unbind()
 BasicNode* VarRefNode::eval()
 {
     if(!this->isbind())
-        throw string("VarRef unbind");
+        throw VarRefUnbindExcep();
     return this->val;
 }
 
@@ -142,7 +142,7 @@ void VarRefNode::setVal(BasicNode* val)
 void VarRefNode::setBorrowVal(BasicNode *val)
 {
     if(val->getType()==Var&&dynamic_cast<Variable*>(val)->isEmpty()) //按目前情况，传过来的只可能是Var，第一个条件有点多余
-        throw string("Variable do not have values");
+        throw unassignedAssignedExcep();
     this->valtype=val->getType();
     this->ownershipFlag=false;
     this->val=val;
@@ -151,9 +151,9 @@ void VarRefNode::setBorrowVal(BasicNode *val)
 void VarRefNode::assignmentChecking(BasicNode *val)
 {
     if(isNotAssignable(val))
-        throw string("Type of val cannot be used as value");
+        throw cannotAssignedExcep();
     if(this->typeRestrictFlag&&val->getType()!=this->valtype)
-        throw string("type mismatch");
+        throw assignedTypeMismatchExcep();
 }
 
 void VarRefNode::bind(BasicNode *val)
@@ -195,7 +195,15 @@ void recursionEval(BasicNode* &node)
             return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
         else
         {
-            BasicNode* result=node->eval();
+            BasicNode* result;
+            #ifdef PARTEVAL
+            try {
+            #endif
+                result=node->eval();
+            #ifdef PARTEVAL
+            }
+            catch(unassignedEvalExcep) {}
+            #endif
             if(node->getType()!=Var)
                 delete node;
             node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
