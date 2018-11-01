@@ -183,10 +183,23 @@ public:
     #endif
 };
 
-class IfNode : public BasicNode
+class conditionalControlNode : public BasicNode
 {
 protected:
     BasicNode* condition;
+    BasicNode* evalCondition();
+public:
+    conditionalControlNode(BasicNode* condition):condition(condition){}
+    conditionalControlNode(const conditionalControlNode& n):BasicNode(n){}
+
+    #ifdef PARTEVAL
+    bool giveupEval;
+    #endif
+};
+
+class IfNode : public conditionalControlNode
+{
+protected:
     ProNode* truePro;
     ProNode* falsePro;
 public:
@@ -194,17 +207,21 @@ public:
     virtual void addNode(BasicNode*) {throw addSonExcep(If);}
     virtual BasicNode* eval();
     IfNode(const IfNode& n);
-    IfNode(BasicNode* condition,ProNode* truePro,ProNode* falsePro):condition(condition),truePro(truePro),falsePro(falsePro) {}
+    IfNode(BasicNode* condition,ProNode* truePro,ProNode* falsePro):conditionalControlNode(condition),truePro(truePro),falsePro(falsePro){}
     virtual ~IfNode();
-
-    #ifdef PARTEVAL
-    bool giveupEval;
-    #endif
 };
 
-class WhileNode : public BasicNode
+class WhileNode : public conditionalControlNode
 {
-    //BasicNode
+protected:
+    ProNode* body;
+public:
+    virtual int getType() {return While;}
+    virtual void addNode(BasicNode*) {throw addSonExcep(While);}
+    virtual BasicNode* eval(); //该类的eval完全不求值，只通过循环本身产生副作用
+    WhileNode(const WhileNode& n);
+    WhileNode(BasicNode* condition,ProNode* body):conditionalControlNode(condition),body(body){}
+    virtual ~WhileNode();
 };
 
 class copyHelp

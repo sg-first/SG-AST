@@ -201,7 +201,8 @@ bool isNotGiveupEval(BasicNode* node)
 {
     if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval))
     if(!(node->getType()==If&&dynamic_cast<IfNode*>(node)->giveupEval))
-    //支持新的控制流节点后要在此处添加
+    if(!(node->getType()==While&&dynamic_cast<WhileNode*>(node)->giveupEval))
+    //warn:支持新的控制流节点后要在此处添加
         return true;
     return false;
 }
@@ -318,26 +319,56 @@ BasicNode* ProNode::eval()
 }
 
 
-BasicNode* IfNode::eval()
+BasicNode* conditionalControlNode::evalCondition()
 {
     #ifdef PARTEVAL
     this->giveupEval=false;
     #endif
 
-    BasicNode* recon=this->condition->eval();
+    BasicNode* recon;
+    #ifdef PARTEVAL
+    try
+    {
+    #endif
+    recon=this->condition->eval();
+    #ifdef PARTEVAL
+    }
+    catch(unassignedEvalExcep) //condition直接就是个符号变量，放弃求值返回自身
+    {throw string("conditionalControlNode return");}
+    #endif
 
     #ifdef PARTEVAL
-    if(recon->getType()==Fun&&dynamic_cast<FunNode*>(recon)->giveupEval)
+    if(recon->getType()==Fun&&dynamic_cast<FunNode*>(recon)->giveupEval) //是一个函数里面有放弃求值的变量
     {
         this->giveupEval=true;
-        return this;
+        throw string("conditionalControlNode return");
+    }
+    #endif
+}
+
+BasicNode* IfNode::eval()
+{
+    BasicNode* recon;
+    #ifdef PARTEVAL
+    try
+    {
+    #endif
+    recon=this->evalCondition();
+    #ifdef PARTEVAL
+    }
+    catch(string e)
+    {
+        if(e=="conditionalControlNode return")
+            return this;
+        else
+            throw e;
     }
     #endif
 
     if(recon->getType()!=Num)
         throw string("IfNode condition value's type mismatch");
     BasicNode* result;
-    if(dynamic_cast<NumNode*>(recon)==0) //这里判断false
+    if(dynamic_cast<NumNode*>(recon)->getNum()==0) //这里判断false
         result=this->falsePro->eval();
     else
         result=this->truePro->eval();
@@ -346,10 +377,51 @@ BasicNode* IfNode::eval()
     return result;
 }
 
-
 IfNode::~IfNode()
 {
     delete this->condition;
     delete this->truePro;
     delete this->falsePro;
+}
+
+BasicNode* WhileNode::eval()
+{
+    ProNode* execpro;
+    while(1)
+    {
+        BasicNode* recon;
+        #ifdef PARTEVAL
+        try
+        {
+        #endif
+            recon=this->evalCondition();
+        #ifdef PARTEVAL
+        }
+        catch(string e)
+        {
+            if(e=="conditionalControlNode return")
+                return this;
+            else
+                throw e;
+        }
+        #endif
+
+        if(recon->getType()!=Num)
+            throw string("WhileNode condition value's type mismatch");
+        if(dynamic_cast<NumNode*>(recon)->getNum()==1) //为真继续循环
+        {
+            execpro=new ProNode(*this->body);
+            execpro->eval();
+            delete execpro;
+        }
+        else
+            break;
+    }
+    return nullptr;
+}
+
+WhileNode::~WhileNode()
+{
+    delete this->condition;
+    delete this->body;
 }

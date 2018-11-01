@@ -23,6 +23,8 @@ BasicNode* copyHelp::copyNode(BasicNode* node) //拷贝单个子节点，warn:�
         return node;
     if(node->getType()==If)
         return new IfNode(*dynamic_cast<IfNode*>(node));
+    if(node->getType()==While)
+        return new WhileNode(*dynamic_cast<WhileNode*>(node));
     throw string("The type is not regular son nodes to copy"); //Pro不作为常规子节点，不在此考虑
 }
 
@@ -33,9 +35,15 @@ BasicNode::BasicNode(const BasicNode &n)
         this->sonNode.push_back(copyHelp::copyNode(i));
 }
 
-IfNode::IfNode(const IfNode &n):BasicNode(n)
+IfNode::IfNode(const IfNode &n):conditionalControlNode(n)
 {
     this->condition=copyHelp::copyNode(n.condition);
     this->truePro=new ProNode(*(n.truePro));
     this->falsePro=new ProNode(*(n.falsePro));
+}
+
+WhileNode::WhileNode(const WhileNode &n):conditionalControlNode(n)
+{
+    this->condition=copyHelp::copyNode(n.condition);
+    this->body=new ProNode(*(n.body));
 }
