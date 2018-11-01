@@ -13,10 +13,6 @@ class unassignedAssignedExcep : public Excep {
 
 };
 
-class cannotEvalNodeExcep : public Excep { //目前只有过程节点
-
-};
-
 class cannotAssignedExcep : public Excep { //这个或许应该加上类型存储
 
 };

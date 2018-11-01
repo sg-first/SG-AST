@@ -116,7 +116,7 @@ class ProNode : public BasicNode
 {
 public:
     virtual int getType() {return Pro;}
-    virtual BasicNode* eval() {throw cannotEvalNodeExcep();}
+    virtual BasicNode* eval();
 
     //BasicNode* getHeadNode() {return this->sonNode.at(0);}
     BasicNode* getSen(int sub) {return this->sonNode.at(sub);}
@@ -173,5 +173,22 @@ public:
     #ifdef PARTEVAL
     bool giveupEval; //如果里边有符号变量，暂时放弃对此节点（基本为函数节点）的求值，并在此做标记防止根函数节点被视为求值结束而delete
     //warn:以后支持控制流节点的时候，控制流节点也要有该成员（若控制流条件中含有符号变量，放弃对整个控制流节点的执行（求值））
+    #endif
+};
+
+class IfNode : public BasicNode
+{
+protected:
+    BasicNode* condition;
+    ProNode* truePro;
+    ProNode* falsePro;
+public:
+    virtual int getType() {return If;}
+    virtual void addNode(BasicNode*) {throw addSonExcep(If);}
+    virtual BasicNode* eval();
+    IfNode(BasicNode* condition,ProNode* truePro,ProNode* falsePro):condition(condition),truePro(truePro),falsePro(falsePro) {}
+
+    #ifdef PARTEVAL
+    bool giveupEval;
     #endif
 };

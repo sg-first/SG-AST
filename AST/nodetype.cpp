@@ -262,29 +262,9 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
     else //不能基础求值就是正常有函数体Pro的
     {
         this->bindArgument(sonNode); //子节点绑定到实参
-        vector<BasicNode*>&funbody=this->pronode->sonNode;
-        for(unsigned int i=0;i<funbody.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
-        {
-            recursionEval(funbody.at(i));
-            if(funbody.at(i)->isRet())
-            {
-                this->unbindArgument();
-                return funbody.at(i);
-            }
-        }
-        //前面都不是返回值，最后一个是
-        BasicNode* lastnode=funbody.at(funbody.size()-1);
-        if(lastnode==nullptr)
-        {
-            this->unbindArgument();
-            return nullptr;
-        }
-        else
-        {
-            recursionEval(lastnode);
-            this->unbindArgument();
-            return lastnode;
-        }
+        BasicNode* result=this->pronode->eval();
+        this->unbindArgument();
+        return result;
     }
 }
 
@@ -317,4 +297,50 @@ void Function::bindArgument(vector<BasicNode *> &sonNode)
         VarReference* formalpar=this->argumentList.at(i);
         formalpar->bind(sonNode.at(i));
     }
+}
+
+
+BasicNode* ProNode::eval()
+{
+    vector<BasicNode*>&body=this->sonNode;
+    for(unsigned int i=0;i<body.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
+    {
+        recursionEval(body.at(i));
+        if(body.at(i)->isRet())
+            return body.at(i);
+    }
+    //前面都不是返回值，最后一个是
+    BasicNode* lastnode=body.at(body.size()-1);
+    if(lastnode==nullptr)
+        return nullptr;
+    else
+    {
+        recursionEval(lastnode);
+        return lastnode;
+    }
+}
+
+
+BasicNode* IfNode::eval()
+{
+    #ifdef PARTEVAL
+    this->giveupEval=false;
+    #endif
+
+    BasicNode* recon=this->condition->eval();
+
+    #ifdef PARTEVAL
+    if(recon->getType()==Fun&&dynamic_cast<FunNode*>(recon)->giveupEval)
+    {
+        this->giveupEval=true;
+        return this;
+    }
+    #endif
+
+    if(recon->getType()!=Num)
+        throw string("IfNode condition value's type mismatch");
+    if(dynamic_cast<NumNode*>(recon)==0) //这里判断false
+        return this->falsePro->eval();
+    else
+        return this->truePro->eval();
 }
