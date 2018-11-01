@@ -15,6 +15,8 @@ public:
     virtual void addNode(BasicNode* node) {this->sonNode.push_back(node);} //使用该方法添加成员可查错
     virtual BasicNode* eval()=0;
     virtual ~BasicNode();
+    BasicNode(const BasicNode& n);
+    BasicNode(){}
 
     //fix:这个ret的实现方法可能不太对劲
     void setRet() {this->retFlag=true;} //不可eval节点设置ret无效
@@ -34,6 +36,7 @@ public:
     virtual void addNode(BasicNode*) {throw addSonExcep(Num);}
     virtual BasicNode* eval() {return this;}
     NumNode(double num) {this->num=num;}
+    NumNode(const NumNode& n):BasicNode(n) {this->num=n.num;}
     NumNode(NumNode* node):num(node->num){}
 
     double getNum() {return this->num;}
@@ -49,6 +52,7 @@ public:
     virtual void addNode(BasicNode*) {throw addSonExcep(String);}
     virtual BasicNode* eval() {return this;}
     StringNode(string str) {this->str=str;}
+    StringNode(const StringNode& n):BasicNode(n) {this->str=n.str;}
     StringNode(StringNode* node):str(node->str){}
 
     string getStr() {return this->str;}
@@ -117,6 +121,8 @@ class ProNode : public BasicNode
 public:
     virtual int getType() {return Pro;}
     virtual BasicNode* eval();
+    ProNode(){}
+    ProNode(const ProNode& n):BasicNode(n){}
 
     //BasicNode* getHeadNode() {return this->sonNode.at(0);}
     BasicNode* getSen(int sub) {return this->sonNode.at(sub);}
@@ -164,6 +170,7 @@ public:
     virtual void addNode(BasicNode* node);
     virtual BasicNode* eval();
     FunNode(Function* funEntity=nullptr):funEntity(funEntity){}
+    FunNode(const FunNode& n):BasicNode(n) {this->funEntity=n.funEntity;} //函数实体所有权不在此，所以可以放心不复制
 
     bool haveEntity() {return this->funEntity!=nullptr;}
     void setEntity(Function* funEntity) {this->funEntity=funEntity;}
@@ -186,7 +193,9 @@ public:
     virtual int getType() {return If;}
     virtual void addNode(BasicNode*) {throw addSonExcep(If);}
     virtual BasicNode* eval();
+    IfNode(const IfNode& n);
     IfNode(BasicNode* condition,ProNode* truePro,ProNode* falsePro):condition(condition),truePro(truePro),falsePro(falsePro) {}
+    virtual ~IfNode();
 
     #ifdef PARTEVAL
     bool giveupEval;

@@ -230,22 +230,21 @@ void recursionEval(BasicNode* &node)
             {result=node;}
             #endif
 
+            if(node->getType()!=Var&&node->getType()!=VarRef)
             #ifdef PARTEVAL
-            if(node->getType()!=Var)
-                if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval)) //对放弃求值的节点，不进行删除
-                //warn:支持控制流节点后，控制流节点放弃求值也不能在此处删除
-            #else
-            if(node->getType()!=Var)
+                //对放弃求值的节点，不进行删除
+                if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval))
+                if(!(node->getType()==If&&dynamic_cast<IfNode*>(node)->giveupEval))
+                //支持新的控制流节点后要在此处添加
             #endif
                 delete node;
             node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
             //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
-            //对于未赋值的变量，求值结果是变量本身，AST没有变化
         }
     }
 }
 
-BasicNode* Function::eval(vector<BasicNode *> &sonNode)
+BasicNode* Function::eval(vector<BasicNode*> &sonNode)
 {
     //对所有参数求值
     for(BasicNode* &node:sonNode)
@@ -262,7 +261,9 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
     else //不能基础求值就是正常有函数体Pro的
     {
         this->bindArgument(sonNode); //子节点绑定到实参
-        BasicNode* result=this->pronode->eval();
+        ProNode* execpro=new ProNode(*this->pronode); //执行复制那个，防止函数体求值时被破坏
+        BasicNode* result=execpro->eval();
+        delete execpro;
         this->unbindArgument();
         return result;
     }
@@ -339,8 +340,20 @@ BasicNode* IfNode::eval()
 
     if(recon->getType()!=Num)
         throw string("IfNode condition value's type mismatch");
+    BasicNode* result;
     if(dynamic_cast<NumNode*>(recon)==0) //这里判断false
-        return this->falsePro->eval();
+        result=this->falsePro->eval();
     else
-        return this->truePro->eval();
+        result=this->truePro->eval();
+
+    delete recon;
+    return result;
+}
+
+
+IfNode::~IfNode()
+{
+    delete this->condition;
+    delete this->truePro;
+    delete this->falsePro;
 }

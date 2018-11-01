@@ -12,7 +12,8 @@ TEMPLATE = app
 SOURCES += main.cpp \
     AST/funinterface.cpp \
     AST/nodetype.cpp \
-    AST/scope.cpp
+    AST/scope.cpp \
+    AST/copynode.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
