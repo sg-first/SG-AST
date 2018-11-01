@@ -194,6 +194,7 @@ BasicNode* FunNode::eval()
     }
     #ifdef PARTEVAL
     catch(callCheckMismatchExcep e) //因为未赋值变量未求值使得参数类型不匹配，放弃对这个函数求值
+    //控制流节点对条件的求值会在此处进行，该节点放弃求值会被上层控制流节点检查到，控制流节点也会放弃求值
     {
         if(e.getType()==TypeMisMatch)
         {
@@ -209,7 +210,7 @@ BasicNode* FunNode::eval()
 
 void recursionEval(BasicNode* &node)
 {
-    if(node->getType()==Pro) //按正常函数里面不要套Pro
+    if(node->getType()==Pro) //按正常求值树里面不要套Pro
         throw string("ProNode cannot be function's sonNode");
     else
     {
@@ -231,7 +232,8 @@ void recursionEval(BasicNode* &node)
 
             #ifdef PARTEVAL
             if(node->getType()!=Var)
-                if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval)) //没有放弃求值
+                if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval)) //对放弃求值的节点，不进行删除
+                //warn:支持控制流节点后，控制流节点放弃求值也不能在此处删除
             #else
             if(node->getType()!=Var)
             #endif
