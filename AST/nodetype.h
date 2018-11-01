@@ -37,7 +37,6 @@ public:
     virtual BasicNode* eval() {return this;}
     NumNode(double num) {this->num=num;}
     NumNode(const NumNode& n):BasicNode(n) {this->num=n.num;}
-    NumNode(NumNode* node):num(node->num){}
 
     double getNum() {return this->num;}
 };
@@ -53,7 +52,6 @@ public:
     virtual BasicNode* eval() {return this;}
     StringNode(string str) {this->str=str;}
     StringNode(const StringNode& n):BasicNode(n) {this->str=n.str;}
-    StringNode(StringNode* node):str(node->str){}
 
     string getStr() {return this->str;}
 };
@@ -83,6 +81,7 @@ public:
     void setBorrowVal(BasicNode* val); //直接对值进行赋值，用这个不转移所有权（一般赋值为变量指针用）
     void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
     void clearVal();
+
     #ifdef READABLEGEN
     string NAME;
     #endif
@@ -140,21 +139,22 @@ private:
     BE BEfun;
     bool iscanBE=false;
     //关于pro求值
-    ProNode* pronode=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个ret路子可能是错的）
+    ProNode* body=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个ret路子可能是错的）
     vector<VarReference*>argumentList; //形参列表，持有所有权。（warn:用了这种方法将很难并行化，一个函数实体同时只能被一组实参占用）
     void unbindArgument();
     void bindArgument(vector<BasicNode*>&sonNode);
 public:
-    Function(unsigned int parnum,ProNode* pronode,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
+    Function(unsigned int parnum,ProNode* body,bool VLP=false):parnum(parnum),body(body),VLP(VLP){} //普通函数（有函数体）
     Function(unsigned int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
         parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),VLP(VLP),iscanBE(true){} //调用到函数接口
     ~Function();
 
-    ProNode* getFunBody() {return this->pronode;}
+    ProNode* getFunBody() {return this->body;}
     unsigned int getParnum() {return this->parnum;}
     bool isVLP() {return this->VLP;}
     void addArgument(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);
+
     #ifdef READABLEGEN
     string NAME;
     #endif
@@ -179,7 +179,7 @@ public:
 
     #ifdef PARTEVAL
     bool giveupEval; //如果里边有符号变量，暂时放弃对此节点（基本为函数节点）的求值，并在此做标记防止根函数节点被视为求值结束而delete
-    //warn:以后支持控制流节点的时候，控制流节点也要有该成员（若控制流条件中含有符号变量，放弃对整个控制流节点的执行（求值））
+    //所有控制流节点也要有该成员（若控制流条件中含有符号变量，放弃对整个控制流节点的执行（求值））
     #endif
 };
 
@@ -200,4 +200,17 @@ public:
     #ifdef PARTEVAL
     bool giveupEval;
     #endif
+};
+
+class WhileNode : public BasicNode
+{
+    //BasicNode
+};
+
+class copyHelp
+{
+public:
+    static BasicNode* copyNode(BasicNode* node);
+    static BasicNode* copyVal(BasicNode* node);
+    static bool isLiteral(BasicNode* node);
 };

@@ -1,11 +1,11 @@
 #include "nodetype.h"
 
-bool isLiteral(BasicNode* node) //是否为字面量，添加新的字面量要进行修改
+bool copyHelp::isLiteral(BasicNode* node) //warn:是否为字面量，添加新的字面量要进行修改
 {
     return (node->getType()==Num||node->getType()==String);
 }
 
-bool isNotAssignable(BasicNode* val) //是否不可赋值给变量，支持新的值类型要进行修改
+bool isNotAssignable(BasicNode* val) //warn:是否不可赋值给变量，支持新的值类型要进行修改
 {
     return (val->getType()==Pro||val->getType()==Fun);
     //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好
@@ -19,17 +19,6 @@ BasicNode::~BasicNode()
         if(node->getType()!=Var) //这个随着域释放，不被连环析构
             delete node;
     }
-}
-
-BasicNode* copyVal(BasicNode* oriVal) //（值类型）拷贝
-{
-    //调用前应该对参数类型进行检查
-    if(oriVal->getType()==Num)
-        return new NumNode(dynamic_cast<NumNode*>(oriVal));
-    if(oriVal->getType()==String)
-        return new StringNode(dynamic_cast<StringNode*>(oriVal));
-    //支持更多具拷贝构造函数类型（目前都是字面量）后还需要在此处进行添加
-    return nullptr; //如果进行参数检查了不会走到这一步
 }
 
 
@@ -78,8 +67,8 @@ void VarNode::setVarVal(VarNode *node)
         throw unassignedAssignedExcep();
     BasicNode* oriVal=node->eval();
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
-    if(isLiteral(oriVal))
-        this->setVal(copyVal(oriVal));
+    if(copyHelp::isLiteral(oriVal))
+        this->setVal(copyHelp::copyVal(oriVal));
     if(oriVal->getType()==Var)
         this->setBorrowVal(oriVal);
     //fix:支持函数指针之后还需要在此处进行添加
@@ -160,8 +149,8 @@ void VarRefNode::bind(BasicNode *val)
 {
     this->assignmentChecking(val);
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
-    if(isLiteral(val))
-        this->setVal(copyVal(val));
+    if(copyHelp::isLiteral(val))
+        this->setVal(copyHelp::copyVal(val));
     if(val->getType()==Var)
         this->setBorrowVal(val);
     //fix:支持函数指针之后还需要在此处进行添加
@@ -207,6 +196,16 @@ BasicNode* FunNode::eval()
     #endif
 }
 
+#ifdef PARTEVAL
+bool isNotGiveupEval(BasicNode* node)
+{
+    if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval))
+    if(!(node->getType()==If&&dynamic_cast<IfNode*>(node)->giveupEval))
+    //支持新的控制流节点后要在此处添加
+        return true;
+    return false;
+}
+#endif
 
 void recursionEval(BasicNode* &node)
 {
@@ -214,7 +213,7 @@ void recursionEval(BasicNode* &node)
         throw string("ProNode cannot be function's sonNode");
     else
     {
-        if(isLiteral(node))
+        if(copyHelp::isLiteral(node))
             return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
         else
         {
@@ -232,10 +231,7 @@ void recursionEval(BasicNode* &node)
 
             if(node->getType()!=Var&&node->getType()!=VarRef)
             #ifdef PARTEVAL
-                //对放弃求值的节点，不进行删除
-                if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval))
-                if(!(node->getType()==If&&dynamic_cast<IfNode*>(node)->giveupEval))
-                //支持新的控制流节点后要在此处添加
+                if(isNotGiveupEval(node)) //对放弃求值的节点，不进行删除
             #endif
                 delete node;
             node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
@@ -261,7 +257,7 @@ BasicNode* Function::eval(vector<BasicNode*> &sonNode)
     else //不能基础求值就是正常有函数体Pro的
     {
         this->bindArgument(sonNode); //子节点绑定到实参
-        ProNode* execpro=new ProNode(*this->pronode); //执行复制那个，防止函数体求值时被破坏
+        ProNode* execpro=new ProNode(*this->body); //执行复制那个，防止函数体求值时被破坏
         BasicNode* result=execpro->eval();
         delete execpro;
         this->unbindArgument();
@@ -271,7 +267,7 @@ BasicNode* Function::eval(vector<BasicNode*> &sonNode)
 
 Function::~Function()
 {
-    delete this->pronode;
+    delete this->body;
     for(VarReference* i:this->argumentList)
         delete i;
 }
