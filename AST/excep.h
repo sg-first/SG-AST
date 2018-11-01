@@ -29,6 +29,24 @@ class VarRefUnbindExcep : public Excep {
 
 };
 
+class argumentNumExceedingExcep : public Excep {
+
+};
+
+class parameterNumExceedingExcep : public Excep {
+
+};
+
+enum callCheckMismatchType{NumberMismatch,TypeMisMatch};
+class callCheckMismatchExcep : public Excep
+{
+private:
+    int type;
+public:
+    callCheckMismatchExcep(int type):type(type) {}
+    int getType() {return this->type;}
+};
+
 class addSonExcep : public Excep
 {
 private:

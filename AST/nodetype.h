@@ -31,8 +31,8 @@ protected:
     double num;
 public:
     virtual int getType() {return Num;}
-    virtual void addNode(BasicNode *node) {throw addSonExcep(Num);}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
+    virtual void addNode(BasicNode*) {throw addSonExcep(Num);}
+    virtual BasicNode* eval() {return this;}
     NumNode(double num) {this->num=num;}
     NumNode(NumNode* node):num(node->num){}
 
@@ -46,8 +46,8 @@ protected:
     string str;
 public:
     virtual int getType() {return String;}
-    virtual void addNode(BasicNode *node) {throw addSonExcep(String);}
-    virtual BasicNode* eval() {return dynamic_cast<BasicNode*>(this);}
+    virtual void addNode(BasicNode*) {throw addSonExcep(String);}
+    virtual BasicNode* eval() {return this;}
     StringNode(string str) {this->str=str;}
     StringNode(StringNode* node):str(node->str){}
 
@@ -66,7 +66,7 @@ protected:
     void assignmentChecking(BasicNode* val);
 public:
     virtual int getType() {return Var;}
-    virtual void addNode(BasicNode* node) {throw addSonExcep(Var);}
+    virtual void addNode(BasicNode*) {throw addSonExcep(Var);}
     virtual BasicNode* eval();
     virtual ~VarNode();
     VarNode(int valtype=-1);
@@ -99,7 +99,7 @@ protected:
     void setBorrowVal(BasicNode* val);
 public:
     virtual int getType() {return VarRef;}
-    virtual void addNode(BasicNode* node) {throw addSonExcep(VarRef);}
+    virtual void addNode(BasicNode*) {throw addSonExcep(VarRef);}
     virtual ~VarRefNode();
     virtual BasicNode* eval(); //eval结果是目前形参绑定到的实参
     VarRefNode(int valtype=-1);
@@ -135,9 +135,9 @@ private:
     bool iscanBE=false;
     //关于pro求值
     ProNode* pronode=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个ret路子可能是错的）
-    vector<VarReference*>formalParList; //形参列表，持有所有权。（warn:用了这种方法将很难并行化，一个函数实体同时只能被一组实参占用）
-    void unbindFormalPar();
-    void bindFormalPar(vector<BasicNode*>&sonNode);
+    vector<VarReference*>argumentList; //形参列表，持有所有权。（warn:用了这种方法将很难并行化，一个函数实体同时只能被一组实参占用）
+    void unbindArgument();
+    void bindArgument(vector<BasicNode*>&sonNode);
 public:
     Function(unsigned int parnum,ProNode* pronode,bool VLP=false):parnum(parnum),pronode(pronode),VLP(VLP){} //普通函数（有函数体）
     Function(unsigned int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
@@ -147,7 +147,7 @@ public:
     ProNode* getFunBody() {return this->pronode;}
     unsigned int getParnum() {return this->parnum;}
     bool isVLP() {return this->VLP;}
-    void addFormalPar(VarReference* var); //先在外面new好，然后转移所有权进来
+    void addArgument(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);
     #ifdef READABLEGEN
     string NAME;
@@ -169,4 +169,8 @@ public:
     void setEntity(Function* funEntity) {this->funEntity=funEntity;}
     Function* getEntity(){return this->funEntity;}
     ProNode* getFunBody() {return this->funEntity->getFunBody();}
+
+    #ifdef PARTEVAL
+    bool giveupEval; //如果里边有符号变量，暂时放弃对此节点（基本为函数节点）的求值，并在此做标记防止根函数节点被视为求值结束而delete
+    #endif
 };

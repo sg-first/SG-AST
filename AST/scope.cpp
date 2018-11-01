@@ -14,7 +14,7 @@ Scope::~Scope()
 void Scope::addVariable(string name)
 {
     Variable* var=new Variable();
-    #ifdef READABLEcodegen
+    #ifdef READABLEGEN
     var->NAME=name;
     #endif
     this->variableList[name]=var;
@@ -22,7 +22,7 @@ void Scope::addVariable(string name)
 
 void Scope::addVariable(string name, Variable *var)
 {
-    #ifdef READABLEcodegen
+    #ifdef READABLEGEN
     var->NAME=name;
     #endif
     this->variableList[name]=var;
@@ -30,7 +30,7 @@ void Scope::addVariable(string name, Variable *var)
 
 void Scope::addFunction(string name, Function *fun)
 {
-    #ifdef READABLEcodegen
+    #ifdef READABLEGEN
     fun->NAME=name;
     #endif
     this->functionList[name]=fun;

@@ -172,16 +172,38 @@ void FunNode::addNode(BasicNode *node)
 {
     if(!this->funEntity->isVLP()) //支持变长参数就先不进行参数个数检查
         if(this->sonNode.size()+1>this->funEntity->getParnum())
-            throw string("Exceeding the number of function parameters");
+            throw parameterNumExceedingExcep();
 
     this->sonNode.push_back(node);
 }
 
 BasicNode* FunNode::eval()
 {
+    #ifdef PARTEVAL
+    this->giveupEval=false;
+    #endif
+
     if(this->funEntity==nullptr)
         throw string("funEntity is null");
+
+    #ifdef PARTEVAL
+    try
+    {
+    #endif
     return this->funEntity->eval(this->sonNode);
+    }
+    #ifdef PARTEVAL
+    catch(callCheckMismatchExcep e) //因为未赋值变量未求值使得参数类型不匹配，放弃对这个函数求值
+    {
+        if(e.getType()==TypeMisMatch)
+        {
+            this->giveupEval=true;
+            return this;
+        }
+        else
+            throw e;
+    }
+    #endif
 }
 
 
@@ -197,14 +219,22 @@ void recursionEval(BasicNode* &node)
         {
             BasicNode* result;
             #ifdef PARTEVAL
-            try {
+            try
+            {
             #endif
-                result=node->eval();
+            result=node->eval();
             #ifdef PARTEVAL
             }
-            catch(unassignedEvalExcep) {}
+            catch(unassignedEvalExcep) //对未赋值变量求值，保持原样
+            {result=node;}
             #endif
+
+            #ifdef PARTEVAL
             if(node->getType()!=Var)
+                if(!(node->getType()==Fun&&dynamic_cast<FunNode*>(node)->giveupEval)) //没有放弃求值
+            #else
+            if(node->getType()!=Var)
+            #endif
                 delete node;
             node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
             //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
@@ -225,18 +255,18 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
         if(this->canBEfun(sonNode)) //参数合法
             return this->BEfun(sonNode);
         else
-            throw string("sonNode type mismatch");
+            throw callCheckMismatchExcep(TypeMisMatch);
     }
     else //不能基础求值就是正常有函数体Pro的
     {
-        this->bindFormalPar(sonNode); //子节点绑定到实参
+        this->bindArgument(sonNode); //子节点绑定到实参
         vector<BasicNode*>&funbody=this->pronode->sonNode;
-        for(int i=0;i<funbody.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
+        for(unsigned int i=0;i<funbody.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
         {
             recursionEval(funbody.at(i));
             if(funbody.at(i)->isRet())
             {
-                this->unbindFormalPar();
+                this->unbindArgument();
                 return funbody.at(i);
             }
         }
@@ -244,13 +274,13 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
         BasicNode* lastnode=funbody.at(funbody.size()-1);
         if(lastnode==nullptr)
         {
-            this->unbindFormalPar();
+            this->unbindArgument();
             return nullptr;
         }
         else
         {
             recursionEval(lastnode);
-            this->unbindFormalPar();
+            this->unbindArgument();
             return lastnode;
         }
     }
@@ -259,30 +289,30 @@ BasicNode* Function::eval(vector<BasicNode *> &sonNode)
 Function::~Function()
 {
     delete this->pronode;
-    for(VarReference* i:this->formalParList)
+    for(VarReference* i:this->argumentList)
         delete i;
 }
 
-void Function::addFormalPar(VarReference *var)
+void Function::addArgument(VarReference *var)
 {
-    if(this->formalParList.size()+1>this->getParnum())
-        throw string("Exceeding the number of parameters");
-    this->formalParList.push_back(var);
+    if(this->argumentList.size()+1>this->getParnum())
+        throw argumentNumExceedingExcep();
+    this->argumentList.push_back(var);
 }
 
-void Function::unbindFormalPar()
+void Function::unbindArgument()
 {
-    for(VarReference* i:this->formalParList)
+    for(VarReference* i:this->argumentList)
         i->unbind();
 }
 
-void Function::bindFormalPar(vector<BasicNode *> &sonNode)
+void Function::bindArgument(vector<BasicNode *> &sonNode)
 {
-    if(sonNode.size()!=this->formalParList.size())
-        throw string("sonNode number mismatch");
-    for(int i=0;i<this->formalParList.size();i++)
+    if(sonNode.size()!=this->argumentList.size())
+        throw callCheckMismatchExcep(NumberMismatch);
+    for(unsigned int i=0;i<this->argumentList.size();i++)
     {
-        VarReference* formalpar=this->formalParList.at(i);
+        VarReference* formalpar=this->argumentList.at(i);
         formalpar->bind(sonNode.at(i));
     }
 }
