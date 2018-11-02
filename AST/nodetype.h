@@ -148,7 +148,7 @@ private:
     BE BEfun;
     bool iscanBE=false;
     //关于pro求值
-    ProNode* body=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullptr）（fix:这个ret路子可能是错的）
+    ProNode* body=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullNode）（fix:这个ret路子可能是错的）
     vector<VarReference*>argumentList; //形参列表，持有所有权。（warn:用了这种方法将很难并行化，一个函数实体同时只能被一组实参占用）
     void unbindArgument();
     void bindArgument(vector<BasicNode*>&sonNode);
