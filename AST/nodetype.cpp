@@ -210,34 +210,29 @@ bool isNotGiveupEval(BasicNode* node)
 
 void recursionEval(BasicNode* &node)
 {
-    if(node->getType()==Pro) //按正常求值树里面不要套Pro
-        throw string("ProNode cannot be function's sonNode");
+    if(copyHelp::isLiteral(node))
+        return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
     else
     {
-        if(copyHelp::isLiteral(node))
-            return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
-        else
+        BasicNode* result;
+        #ifdef PARTEVAL
+        try
         {
-            BasicNode* result;
-            #ifdef PARTEVAL
-            try
-            {
-            #endif
-            result=node->eval();
-            #ifdef PARTEVAL
-            }
-            catch(unassignedEvalExcep) //对未赋值变量求值，保持原样
-            {result=node;}
-            #endif
-
-            if(node->getType()!=Var&&node->getType()!=VarRef)
-            #ifdef PARTEVAL
-                if(isNotGiveupEval(node)) //对放弃求值的节点，不进行删除
-            #endif
-                delete node;
-            node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
-            //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
+        #endif
+        result=node->eval();
+        #ifdef PARTEVAL
         }
+        catch(unassignedEvalExcep) //对未赋值变量求值，保持原样
+        {result=node;}
+        #endif
+
+        if(node->getType()!=Var&&node->getType()!=VarRef)
+        #ifdef PARTEVAL
+            if(isNotGiveupEval(node)) //对放弃求值的节点，不进行删除
+        #endif
+            delete node;
+        node=result; //节点的替换在这里（父节点）完成，子节点只需要返回即可
+        //对于已经赋值的变量，整体过程是用值替代本身变量在AST中的位置，不过变量本身并没有被析构，因为变量的所有权在scope（后面可能还要访问）
     }
 }
 

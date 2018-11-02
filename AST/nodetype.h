@@ -131,7 +131,7 @@ public:
     virtual BasicNode* eval();
     ProNode(){}
     ProNode(const ProNode& n):BasicNode(n){}
-
+    //fix:该节点现在可以求值，实际应该做成逗号表达式一类的结构，支持PARTEVAL。但现在pro eval完了都释放，所以没啥用
     //BasicNode* getHeadNode() {return this->sonNode.at(0);}
     BasicNode* getSen(int sub) {return this->sonNode.at(sub);}
     void passEffect(vector<BasicNode*>sonNode);
