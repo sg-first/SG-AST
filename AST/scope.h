@@ -10,20 +10,25 @@ public:
     ~Scope();
     map<string,Variable*> variableList;
     map<string,Function*> functionList;
+    map<string,Array*> arrayList;
     vector<Scope*> sonScope;
     Scope* fatherScope; //因为可能顺着作用域向上层找变量，所以需要上级节点的指针
     Scope(Scope* fatherScope=nullptr):fatherScope(fatherScope){}
 
     void addVariable(string name);
     void addVariable(string name,Variable* var);
+    void addArray(string name);
+    void addArray(string name,Array* var);
     void addFunction(string name,Function* fun);
     bool haveVariable(string name) {return this->variableList[name]!=0;}
     bool haveFunction(string name) {return this->functionList[name]!=0;}
+    bool haveArray(string name) {return this->arrayList[name]!=0;}
     //直接删除实体，在已经将所有实体引用在树中清空时使用（目前还没看到有什么用）
     //void deleteVariable(string name);
     //void deleteFunction(string name);
     //删除实体指针在域中的存储，在已经将所有实体引用在树中清空时使用且已经delete时使用
     void deleteVariable(Variable* var);
     void deleteFunction(Function* fun);
+    void deleteArray(Array* arr);
     void settopASTNode(BasicNode* topnode) {this->topASTNode=topnode;}
 };

@@ -74,7 +74,6 @@ protected:
     int valtype;
     bool ownershipFlag;
 
-    void assignmentChecking(BasicNode* val);
 public:
     virtual int getType() {return Var;}
     virtual void addNode(BasicNode*) {throw addSonExcep(Var);}
@@ -97,6 +96,33 @@ public:
 };
 typedef VarNode Variable; //内存实体是Variable，其指针才作为节点（不像某些节点一样是遇到一个就new一次），参考函数实体和函数节点的思想
 
+class ArrNode : public BasicNode
+{
+protected:
+    bool typeRestrictFlag=false;
+    vector<VarNode*>allelm;
+    int valtype; //每个变量值的类型
+public:
+    virtual int getType() {return Arr;}
+    virtual void addNode(BasicNode*) {throw addSonExcep(Arr);}
+    virtual BasicNode* eval() {return this;}
+    virtual ~ArrNode() {this->clearArray();}
+    ArrNode(int valtype=-1);
+
+    VarNode* addElm(int valtype=-1);
+    VarNode* addElm(VarNode* var); //注意，该函数会移交所传递变量的所有权
+    VarNode* getElm(unsigned int sub) {return this->allelm.at(sub);}
+    unsigned int getLen() {return this->allelm.size();}
+    void delElm(unsigned int sub);
+    bool istypeRestrict() {return this->typeRestrictFlag;}
+    int getValType();
+    void clearArray();
+
+    #ifdef READABLEGEN
+    string NAME;
+    #endif
+};
+typedef ArrNode Array; //同上
 
 class VarRefNode : public BasicNode
 {
@@ -106,7 +132,6 @@ protected:
     int valtype;
     bool ownershipFlag;
 
-    void assignmentChecking(BasicNode* val);
     void setVal(BasicNode* val);
     void setBorrowVal(BasicNode* val);
 public:
@@ -227,7 +252,7 @@ protected:
 public:
     virtual int getType() {return While;}
     virtual void addNode(BasicNode*) {throw addSonExcep(While);}
-    virtual BasicNode* eval(); //该类的eval完全不求值，只通过循环本身产生副作用
+    virtual BasicNode* eval(); //该类的eval不求值（返回NullNode），只通过循环本身产生副作用
     WhileNode(const WhileNode& n);
     WhileNode(BasicNode* condition,ProNode* body):conditionalControlNode(condition),body(body){}
     virtual ~WhileNode();
@@ -239,4 +264,5 @@ public:
     static BasicNode* copyNode(BasicNode* node);
     static BasicNode* copyVal(BasicNode* node);
     static bool isLiteral(BasicNode* node);
+    static bool isLiteral(int type);
 };

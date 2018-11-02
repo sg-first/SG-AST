@@ -21,10 +21,6 @@ class cannotEvaledExcep : public Excep {
     
 };
 
-class assignedTypeMismatchExcep : public Excep { //这个应该加上…………
-
-};
-
 class VarRefUnbindExcep : public Excep {
 
 };

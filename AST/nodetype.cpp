@@ -1,8 +1,13 @@
 #include "nodetype.h"
 
-bool copyHelp::isLiteral(BasicNode* node) //warn:是否为字面量，添加新的字面量要进行修改
+bool copyHelp::isLiteral(int type) //warn:是否为字面量，添加新的字面量要进行修改
 {
-    return (node->getType()==Num||node->getType()==String);
+    return (type==Num||type==String);
+}
+
+bool copyHelp::isLiteral(BasicNode* node)
+{
+    return copyHelp::isLiteral(node->getType());
 }
 
 bool isNotAssignable(BasicNode* val) //warn:是否不可赋值给变量，支持新的值类型要进行修改
@@ -36,17 +41,17 @@ VarNode::~VarNode()
     //然后BasicNode析构
 }
 
-void VarNode::assignmentChecking(BasicNode *val)
+void assignmentChecking(BasicNode *val,bool thisTypeRestrictFlag,int thisvaltype)
 {
     if(isNotAssignable(val))
         throw cannotAssignedExcep();
-    if(this->typeRestrictFlag&&val->getType()!=this->valtype)
-        throw assignedTypeMismatchExcep();
+    if(thisTypeRestrictFlag&&val->getType()!=thisvaltype)
+        throw string("Mismatch between assignment type and variable type");
 }
 
 void VarNode::setVal(BasicNode* val)
 {
-    this->assignmentChecking(val);
+    assignmentChecking(val,this->typeRestrictFlag,this->getType());
     //warn:理论上讲按照目前的设计，变量不应作为具有所有权的值（因为所有权在运行时域），但在此暂不进行检查。如果进行检查，直接在此处添加
     this->valtype=val->getType();
     this->ownershipFlag=true;
@@ -55,7 +60,7 @@ void VarNode::setVal(BasicNode* val)
 
 void VarNode::setBorrowVal(BasicNode *val)
 {
-    this->assignmentChecking(val);
+    assignmentChecking(val,this->typeRestrictFlag,this->getType());
     this->valtype=val->getType();
     this->ownershipFlag=false;
     this->val=val;
@@ -137,17 +142,9 @@ void VarRefNode::setBorrowVal(BasicNode *val)
     this->val=val;
 }
 
-void VarRefNode::assignmentChecking(BasicNode *val)
-{
-    if(isNotAssignable(val))
-        throw cannotAssignedExcep();
-    if(this->typeRestrictFlag&&val->getType()!=this->valtype)
-        throw assignedTypeMismatchExcep();
-}
-
 void VarRefNode::bind(BasicNode *val)
 {
-    this->assignmentChecking(val);
+    assignmentChecking(val,this->typeRestrictFlag,this->getType());
     //目前策略为：字面量进行拷贝（有所有权），变量作为无所有权指针传递
     if(copyHelp::isLiteral(val))
         this->setVal(copyHelp::copyVal(val));
@@ -415,4 +412,53 @@ WhileNode::~WhileNode()
 {
     delete this->condition;
     delete this->body;
+}
+
+
+void ArrNode::clearArray()
+{
+    //ArrayNode所有权由域持有，内含变量所有权由类本身持有，因此所有elm全部释放
+    for(BasicNode* node:this->allelm)
+       delete node;
+}
+
+ArrNode::ArrNode(int valtype)
+{
+    this->valtype=valtype;
+    if(valtype!=-1) //开启严格求值
+        this->typeRestrictFlag=true;
+}
+
+VarNode* ArrNode::addElm(int valtype)
+{
+    if(this->typeRestrictFlag)
+        if(valtype!=this->valtype)
+            throw string("Element type does not match array type");
+
+    VarNode* node=new VarNode(valtype);
+    this->allelm.push_back(node);
+    return node;
+}
+
+VarNode* ArrNode::addElm(VarNode *var)
+{
+    if(this->typeRestrictFlag)
+        if(valtype!=var->getValType())
+            throw string("Element type does not match array type");
+
+    this->allelm.push_back(var);
+    return var;
+}
+
+int ArrNode::getValType()
+{
+    if(!this->typeRestrictFlag)
+        throw string("non-typeRestrict array no same valtype");
+    return this->valtype;
+}
+
+void ArrNode::delElm(unsigned int sub)
+{
+    vector<VarNode*>::iterator it=this->allelm.begin()+sub;
+    this->allelm.erase(it);
 }
