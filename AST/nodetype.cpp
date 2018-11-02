@@ -7,7 +7,7 @@ bool copyHelp::isLiteral(BasicNode* node) //warn:是否为字面量，添加新�
 
 bool isNotAssignable(BasicNode* val) //warn:是否不可赋值给变量，支持新的值类型要进行修改
 {
-    return (val->getType()==Pro||val->getType()==Fun);
+    return (val->getType()==Pro||val->getType()==Fun||val->getType()==If||val->getType()==While);
     //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好
 }
 
