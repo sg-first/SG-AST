@@ -309,13 +309,9 @@ BasicNode* ProNode::eval()
     }
     //前面都不是返回值，最后一个是
     BasicNode* lastnode=body.at(body.size()-1);
-    if(lastnode==nullptr)
-        return nullptr;
-    else
-    {
+    if(lastnode->getType()!=Null)
         recursionEval(lastnode);
-        return lastnode;
-    }
+    return lastnode;
 }
 
 
@@ -417,7 +413,7 @@ BasicNode* WhileNode::eval()
         else
             break;
     }
-    return nullptr;
+    return new nullNode();
 }
 
 WhileNode::~WhileNode()
