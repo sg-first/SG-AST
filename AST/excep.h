@@ -17,6 +17,10 @@ class cannotAssignedExcep : public Excep { //这个或许应该加上类型存�
 
 };
 
+class cannotEvaledExcep : public Excep {
+    
+};
+
 class assignedTypeMismatchExcep : public Excep { //这个应该加上…………
 
 };
