@@ -27,6 +27,15 @@ typedef function<bool(vector<BasicNode*>&sonNode)>canBE; //检测函数基础求
 typedef function<BasicNode*(vector<BasicNode*>&sonNode)>BE; //进行基础求值
 
 
+class nullNode : public BasicNode
+{
+public:
+    virtual int getType() {return Null;}
+    virtual void addNode(BasicNode*) {throw addSonExcep(Null);}
+    virtual BasicNode* eval() {throw cannotEvaledExcep();}
+};
+
+
 class NumNode : public BasicNode
 {
 protected:
