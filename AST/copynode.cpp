@@ -25,6 +25,8 @@ BasicNode* copyHelp::copyNode(BasicNode* node) //拷贝单个子节点，warn:�
         return new IfNode(*dynamic_cast<IfNode*>(node));
     if(node->getType()==While)
         return new WhileNode(*dynamic_cast<WhileNode*>(node));
+    if(node->getType()==Null)
+        return new NullNode(*dynamic_cast<NullNode*>(node));
     throw string("The type is not regular son nodes to copy"); //Pro不作为常规子节点，不在此考虑
 }
 
