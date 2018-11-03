@@ -267,8 +267,9 @@ Function::~Function()
 
 void Function::addArgument(VarReference *var)
 {
-    if(this->argumentList.size()+1>this->getParnum())
-        throw argumentNumExceedingExcep();
+    if(!this->isVLP()) //支持变长参数就先不进行参数个数检查
+        if(this->argumentList.size()+1>this->getParnum())
+            throw argumentNumExceedingExcep();
     this->argumentList.push_back(var);
 }
 
@@ -328,10 +329,12 @@ BasicNode* conditionalControlNode::evalCondition()
     #ifdef PARTEVAL
     if(recon->getType()==Fun&&dynamic_cast<FunNode*>(recon)->giveupEval) //是一个函数里面有放弃求值的变量
     {
-        this->giveupEval=true;
+        this->giveupEval=true; //本控制流节点也放弃求值
         throw string("conditionalControlNode return");
     }
     #endif
+
+    return recon;
 }
 
 BasicNode* IfNode::eval()
@@ -347,7 +350,7 @@ BasicNode* IfNode::eval()
     catch(string e)
     {
         if(e=="conditionalControlNode return")
-            return this;
+            return this; //放弃求值，直接返回
         else
             throw e;
     }
@@ -422,15 +425,24 @@ void ArrNode::clearArray()
        delete node;
 }
 
-ArrNode::ArrNode(int valtype)
+ArrNode::ArrNode(int valtype, int size)
 {
     this->valtype=valtype;
+    this->size=size;
     if(valtype!=-1) //开启严格求值
         this->typeRestrictFlag=true;
 }
 
+void ArrNode::arrSizeCheck()
+{
+    if(!this->isVLA()) //限制参数个数
+        if(this->allelm.size()+1>this->size)
+            throw string("Array is too long");
+}
+
 VarNode* ArrNode::addElm(int valtype)
 {
+    this->arrSizeCheck();
     if(this->typeRestrictFlag)
         if(valtype!=this->valtype)
             throw string("Element type does not match array type");
@@ -442,6 +454,7 @@ VarNode* ArrNode::addElm(int valtype)
 
 VarNode* ArrNode::addElm(VarNode *var)
 {
+    this->arrSizeCheck();
     if(this->typeRestrictFlag)
         if(valtype!=var->getValType())
             throw string("Element type does not match array type");

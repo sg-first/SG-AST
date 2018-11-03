@@ -6,7 +6,7 @@
 #include "excep.h"
 using namespace std;
 
-class BasicNode //不可直接创建对象
+class BasicNode
 {
 protected:
     bool retFlag=false;
@@ -102,12 +102,15 @@ protected:
     bool typeRestrictFlag=false;
     vector<VarNode*>allelm;
     int valtype; //每个变量值的类型
+    int size; //最大长度，-1为不限
+
+    void arrSizeCheck();
 public:
     virtual int getType() {return Arr;}
     virtual void addNode(BasicNode*) {throw addSonExcep(Arr);}
     virtual BasicNode* eval() {return this;}
     virtual ~ArrNode() {this->clearArray();}
-    ArrNode(int valtype=-1);
+    ArrNode(int valtype=-1,int size=-1);
 
     VarNode* addElm(int valtype=-1);
     VarNode* addElm(VarNode* var); //注意，该函数会移交所传递变量的所有权
@@ -117,6 +120,7 @@ public:
     bool istypeRestrict() {return this->typeRestrictFlag;}
     int getValType();
     void clearArray();
+    bool isVLA() {return this->size==-1;}
 
     #ifdef READABLEGEN
     string NAME;
@@ -166,8 +170,8 @@ public:
 class Function
 {
 private:
-    unsigned int parnum; //参数个数
-    bool VLP; //是否不进行参数个数检查
+    int parnum; //参数个数
+    //bool VLP; //是否不进行参数个数检查
     //关于基础求值
     canBE canBEfun;
     BE BEfun;
@@ -178,14 +182,14 @@ private:
     void unbindArgument();
     void bindArgument(vector<BasicNode*>&sonNode);
 public:
-    Function(unsigned int parnum,ProNode* body,bool VLP=false):parnum(parnum),body(body),VLP(VLP){} //普通函数（有函数体）
-    Function(unsigned int parnum,canBE canBEfun,BE BEfun,bool VLP=false):
-        parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),VLP(VLP),iscanBE(true){} //调用到函数接口
+    Function(ProNode* body,int parnum=-1):parnum(parnum),body(body){} //普通函数（有函数体）
+    Function(canBE canBEfun,BE BEfun,int parnum=-1):
+        parnum(parnum),canBEfun(canBEfun),BEfun(BEfun),iscanBE(true){} //调用到函数接口
     ~Function();
 
     ProNode* getFunBody() {return this->body;}
-    unsigned int getParnum() {return this->parnum;}
-    bool isVLP() {return this->VLP;}
+    int getParnum() {return this->parnum;}
+    bool isVLP() {return this->parnum==-1;}
     void addArgument(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);
 
