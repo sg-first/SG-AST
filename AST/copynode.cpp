@@ -17,6 +17,8 @@ BasicNode* copyHelp::copyNode(BasicNode* node) //拷贝单个子节点，warn:�
         return copyHelp::copyVal(node);
     if(node->getType()==Var) //Var所有权在域，此处不进行复制，直接返回
         return node;
+    if(node->getType()==Arr) //所有权在域，此处不进行复制，直接返回
+        return node;
     if(node->getType()==Fun)
         return new FunNode(*dynamic_cast<FunNode*>(node));
     if(node->getType()==VarRef) //VarRef所有权在函数节点，此处不进行复制，直接返回
