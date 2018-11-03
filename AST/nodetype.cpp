@@ -2,7 +2,7 @@
 
 bool copyHelp::isLiteral(int type) //warn:是否为字面量，添加新的字面量要进行修改
 {
-    return (type==Num||type==String);
+    return (type==Num||type==String||type==Arr||type==Null); //暂且先把Null安排上
 }
 
 bool copyHelp::isLiteral(BasicNode* node)
@@ -10,7 +10,7 @@ bool copyHelp::isLiteral(BasicNode* node)
     return copyHelp::isLiteral(node->getType());
 }
 
-bool isNotAssignable(BasicNode* val) //warn:是否不可赋值给变量，支持新的值类型要进行修改
+bool isNotAssignable(BasicNode* val) //warn:是否不可赋值给变量，支持新的节点类型要进行修改
 {
     return (val->getType()==Pro||val->getType()==Fun||val->getType()==If||val->getType()==While);
     //fix:目前暂不支持函数指针，因为函数实体的变量表示还没设计好
@@ -425,10 +425,10 @@ void ArrNode::clearArray()
        delete node;
 }
 
-ArrNode::ArrNode(int valtype, int size)
+ArrNode::ArrNode(int valtype, int len)
 {
     this->valtype=valtype;
-    this->size=size;
+    this->len=len;
     if(valtype!=-1) //开启严格求值
         this->typeRestrictFlag=true;
 }
@@ -436,7 +436,7 @@ ArrNode::ArrNode(int valtype, int size)
 void ArrNode::arrSizeCheck()
 {
     if(!this->isVLA()) //限制参数个数
-        if(this->allelm.size()+1>this->size)
+        if(this->allelm.size()+1>this->len)
             throw string("Array is too long");
 }
 
@@ -461,13 +461,6 @@ VarNode* ArrNode::addElm(VarNode *var)
 
     this->allelm.push_back(var);
     return var;
-}
-
-int ArrNode::getValType()
-{
-    if(!this->typeRestrictFlag)
-        throw string("non-typeRestrict array no same valtype");
-    return this->valtype;
 }
 
 void ArrNode::delElm(unsigned int sub)

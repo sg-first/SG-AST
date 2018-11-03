@@ -20,7 +20,7 @@ public:
 
     //fix:这个ret的实现方法可能不太对劲
     void setRet() {this->retFlag=true;} //不可eval节点设置ret无效
-    bool isRet() {return this->retFlag;}
+    bool isRet() const {return this->retFlag;}
     vector<BasicNode*> sonNode;
 };
 typedef function<bool(vector<BasicNode*>&sonNode)>canBE; //检测函数基础求值参数表是否合法
@@ -45,9 +45,9 @@ public:
     virtual void addNode(BasicNode*) {throw addSonExcep(Num);}
     virtual BasicNode* eval() {return this;}
     NumNode(double num) {this->num=num;}
-    NumNode(const NumNode& n):BasicNode(n) {this->num=n.num;}
+    NumNode(const NumNode& n):BasicNode(n) {this->num=n.getNum();}
 
-    double getNum() {return this->num;}
+    double getNum() const {return this->num;}
 };
 
 
@@ -60,9 +60,9 @@ public:
     virtual void addNode(BasicNode*) {throw addSonExcep(String);}
     virtual BasicNode* eval() {return this;}
     StringNode(string str) {this->str=str;}
-    StringNode(const StringNode& n):BasicNode(n) {this->str=n.str;}
+    StringNode(const StringNode& n):BasicNode(n) {this->str=n.getStr();}
 
-    string getStr() {return this->str;}
+    string getStr() const {return this->str;}
 };
 
 
@@ -80,11 +80,12 @@ public:
     virtual BasicNode* eval();
     virtual ~VarNode();
     VarNode(int valtype=-1);
+    VarNode(VarNode &n);
 
-    bool isEmpty() {return (this->val==nullptr);}
-    bool istypeRestrict() {return this->typeRestrictFlag;}
-    int getValType() {return this->valtype;}
-    bool isOwnership() {return this->ownershipFlag;}
+    bool isEmpty() const {return (this->val==nullptr);}
+    bool istypeRestrict() const {return this->typeRestrictFlag;}
+    int getValType() const {return this->valtype;}
+    bool isOwnership() const {return this->ownershipFlag;}
     void setVal(BasicNode* val); //直接对值进行赋值，用这个传进来意味着转移所有权到本类（一般赋值为字面量用）
     void setBorrowVal(BasicNode* val); //直接对值进行赋值，用这个不转移所有权（一般赋值为变量指针用）
     void setVarVal(VarNode* node); //传递变量的值到this的值，即需要进行一次解包
@@ -96,37 +97,37 @@ public:
 };
 typedef VarNode Variable; //内存实体是Variable，其指针才作为节点（不像某些节点一样是遇到一个就new一次），参考函数实体和函数节点的思想
 
-class ArrNode : public BasicNode
+class ArrNode : public BasicNode //注意，该节点是作为字面量存在的，传递时应当转移所有权
 {
 protected:
     bool typeRestrictFlag=false;
-    vector<VarNode*>allelm;
-    int valtype; //每个变量值的类型
-    int size; //最大长度，-1为不限
+    int valtype; //fix:应当记录交叉类型，所以这里和设计原则有些冲突，集成TSystem前要改好
+    //可选的方案：将typeRestrictFlag改为【严格同一类型】，同一类型用现在这个valtype，正常的typeRestrictFlag检查交叉类型
+    int len; //最大长度，-1为不限
 
     void arrSizeCheck();
+    void clearArray(); //这个暂时调整成私有
 public:
     virtual int getType() {return Arr;}
     virtual void addNode(BasicNode*) {throw addSonExcep(Arr);}
     virtual BasicNode* eval() {return this;}
     virtual ~ArrNode() {this->clearArray();}
-    ArrNode(int valtype=-1,int size=-1);
+    ArrNode(int valtype=-1,int len=-1);
+    ArrNode(const ArrNode& n);
 
     VarNode* addElm(int valtype=-1);
     VarNode* addElm(VarNode* var); //注意，该函数会移交所传递变量的所有权
-    VarNode* getElm(unsigned int sub) {return this->allelm.at(sub);}
-    unsigned int getLen() {return this->allelm.size();}
     void delElm(unsigned int sub);
-    bool istypeRestrict() {return this->typeRestrictFlag;}
-    int getValType();
-    void clearArray();
-    bool isVLA() {return this->size==-1;}
+    VarNode* getElm(unsigned int sub) {return this->allelm.at(sub);} //和访问直接访问allelm没啥区别，为了和楼上对称先留着
+    unsigned int getNowLen() const {return this->allelm.size();}
+    bool istypeRestrict() const {return this->typeRestrictFlag;}
+    int getValType() const {return this->valtype;} //调用前自行检查istypeRestrict
+    bool isVLA() const {return this->len==-1;}
+    int getLen() const {return this->len;} //最大长度
 
-    #ifdef READABLEGEN
-    string NAME;
-    #endif
+    vector<VarNode*>allelm;
 };
-typedef ArrNode Array; //同上
+//typedef ArrNode Array; //同上
 
 class VarRefNode : public BasicNode
 {

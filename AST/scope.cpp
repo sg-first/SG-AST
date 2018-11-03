@@ -28,23 +28,6 @@ void Scope::addVariable(string name, Variable *var)
     this->variableList[name]=var;
 }
 
-void Scope::addArray(string name)
-{
-    Array* var=new Array();
-    #ifdef READABLEGEN
-    var->NAME=name;
-    #endif
-    this->arrayList[name]=var;
-}
-
-void Scope::addArray(string name, Array *var)
-{
-    #ifdef READABLEGEN
-    var->NAME=name;
-    #endif
-    this->arrayList[name]=var;
-}
-
 void Scope::addFunction(string name, Function *fun)
 {
     #ifdef READABLEGEN
@@ -80,14 +63,5 @@ void Scope::deleteFunction(Function *fun)
     {
         if(p.second==fun)
             this->functionList.erase(p.first);
-    }
-}
-
-void Scope::deleteArray(Array *arr)
-{
-    for(auto p:this->arrayList)
-    {
-        if(p.second==arr)
-            this->arrayList.erase(p.first);
     }
 }
