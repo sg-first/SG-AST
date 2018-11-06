@@ -431,21 +431,24 @@ ArrNode::ArrNode(int valtype, int len)
     this->len=len;
     if(valtype!=-1) //开启严格求值
         this->typeRestrictFlag=true;
-}
 
-void ArrNode::arrSizeCheck()
-{
-    if(!this->isVLA()) //限制参数个数
-        if(this->allelm.size()+1>this->len)
-            throw string("Array is too long");
+    //非定长数组会自动全部初始化
+    if(len!=-1)
+    {
+        for(unsigned int i=0;i<len;i++)
+            this->allelm.push_back(new VarNode(valtype));
+    }
 }
 
 VarNode* ArrNode::addElm(int valtype)
 {
-    this->arrSizeCheck();
+    if(!this->isVLA())
+        throw string("non-VLA Arr cannot add Elm");
     if(this->typeRestrictFlag)
+    {
         if(valtype!=this->valtype)
             throw string("Element type does not match array type");
+    }
 
     VarNode* node=new VarNode(valtype);
     this->allelm.push_back(node);
@@ -454,10 +457,13 @@ VarNode* ArrNode::addElm(int valtype)
 
 VarNode* ArrNode::addElm(VarNode *var)
 {
-    this->arrSizeCheck();
+    if(!this->isVLA())
+        throw string("non-VLA Arr cannot add Elm");
     if(this->typeRestrictFlag)
-        if(valtype!=var->getValType())
+    {
+        if(valtype!=this->valtype)
             throw string("Element type does not match array type");
+    }
 
     this->allelm.push_back(var);
     return var;

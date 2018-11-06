@@ -105,7 +105,6 @@ protected:
     //可选的方案：将typeRestrictFlag改为【严格同一类型】，同一类型用现在这个valtype，正常的typeRestrictFlag检查交叉类型
     int len; //最大长度，-1为不限
 
-    void arrSizeCheck();
     void clearArray(); //这个暂时调整成私有
 public:
     virtual int getType() {return Arr;}
@@ -115,6 +114,7 @@ public:
     ArrNode(int valtype=-1,int len=-1);
     ArrNode(const ArrNode& n);
 
+    //这两个addElm是给变长数组用的，定长会自动分配内存
     VarNode* addElm(int valtype=-1);
     VarNode* addElm(VarNode* var); //注意，该函数会移交所传递变量的所有权
     void delElm(unsigned int sub);
