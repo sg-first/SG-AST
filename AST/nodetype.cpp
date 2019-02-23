@@ -87,7 +87,12 @@ BasicNode* VarNode::eval()
     if(this->isEmpty())
         throw unassignedEvalExcep();
     else
-        return this->val;
+    {
+        if(copyHelp::isLiteral(this->val))
+            return copyHelp::copyVal(this->val);
+        else
+            return this->val;
+    }
     //注意，多级指针也只会解包一次。不过从返回值基本无法判断返回的是自身还是自身的变量指针值，所以先前需要getValType进行判断
 }
 
