@@ -52,7 +52,7 @@ WhileNode::WhileNode(const WhileNode &n):conditionalControlNode(n)
     this->body=new ProNode(*(n.body));
 }
 
-VarNode::VarNode(VarNode &n)
+VarNode::VarNode(VarNode &n):BasicNode(n)
 {
     this->typeRestrictFlag=n.istypeRestrict();
     this->ownershipFlag=n.isOwnership();
