@@ -14,7 +14,7 @@ public:
     Scope* fatherScope; //因为可能顺着作用域向上层找变量，所以需要上级节点的指针
     Scope(Scope* fatherScope=nullptr):fatherScope(fatherScope){}
 
-    void addVariable(string name);
+    Variable *addVariable(string name);
     void addVariable(string name,Variable* var);
     void addFunction(string name,Function* fun);
     bool haveVariable(string name) {return this->variableList[name]!=0;}
