@@ -14,11 +14,11 @@ public:
     Scope* fatherScope; //因为可能顺着作用域向上层找变量，所以需要上级节点的指针
     Scope(Scope* fatherScope=nullptr):fatherScope(fatherScope){}
 
-    Variable *addVariable(string name);
+    Variable* addVariable(string name);
     void addVariable(string name,Variable* var);
     void addFunction(string name,Function* fun);
-    bool haveVariable(string name) {return this->variableList[name]!=0;}
-    bool haveFunction(string name) {return this->functionList[name]!=0;}
+    Variable* findVariable(string name, bool thisScope=true);
+    Function* findFunction(string name,bool thisScope=true);
     //直接删除实体，在已经将所有实体引用在树中清空时使用（目前还没看到有什么用）
     //void deleteVariable(string name);
     //void deleteFunction(string name);
