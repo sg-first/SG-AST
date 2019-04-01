@@ -9,6 +9,12 @@ Scope::~Scope()
         delete i.second;
     for(Scope* i:this->sonScope)
         delete i;
+    if(fatherScope)
+        for(auto i = fatherScope->sonScope.begin(); i < fatherScope->sonScope.end(); i++)
+        {
+            if(*i == this)
+                fatherScope->sonScope.erase(i);
+        }
 }
 
 Variable* Scope::addVariable(string name)
