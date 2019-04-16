@@ -42,7 +42,7 @@ void assignmentChecking(BasicNode *val,bool thisTypeRestrictFlag,int thisvaltype
     if(isNotAssignable(val))
         throw cannotAssignedExcep();
     if(thisTypeRestrictFlag&&val->getType()!=thisvaltype)
-        throw string("Mismatch between assignment type and variable type");
+        throw Excep("Mismatch between assignment type and variable type");
 }
 
 void VarNode::setVal(BasicNode* val)
@@ -174,7 +174,7 @@ BasicNode* FunNode::eval()
 #endif
 
     if(this->funEntity==nullptr)
-        throw string("funEntity is null");
+        throw Excep("funEntity is null");
 
 #ifdef PARTEVAL
     try
@@ -327,14 +327,14 @@ BasicNode* conditionalControlNode::evalCondition()
 #ifdef PARTEVAL
     }
     catch(unassignedEvalExcep) //condition直接就是个符号变量，放弃求值返回自身
-    {throw string("conditionalControlNode return");}
+    {throw Excep("conditionalControlNode return");}
 #endif
 
 #ifdef PARTEVAL
     if(recon->getType()==Fun&&dynamic_cast<FunNode*>(recon)->giveupEval) //是一个函数里面有放弃求值的变量
     {
         this->giveupEval=true; //本控制流节点也放弃求值
-        throw string("conditionalControlNode return");
+        throw Excep("conditionalControlNode return");
     }
 #endif
 
@@ -361,7 +361,7 @@ BasicNode* IfNode::eval()
 #endif
 
     if(recon->getType()!=Num)
-        throw string("IfNode condition value's type mismatch");
+        throw Excep("IfNode condition value's type mismatch");
     BasicNode* result;
     if(dynamic_cast<NumNode*>(recon)->getNum()==0) //这里判断false
         result=this->falsePro->eval();
@@ -402,7 +402,7 @@ BasicNode* WhileNode::eval()
 #endif
 
         if(recon->getType()!=Num)
-            throw string("WhileNode condition value's type mismatch");
+            throw Excep("WhileNode condition value's type mismatch");
         if(dynamic_cast<NumNode*>(recon)->getNum()==1) //为真继续循环
         {
             execpro=new ProNode(*this->body);
@@ -447,11 +447,11 @@ ArrNode::ArrNode(int valtype, int len)
 VarNode* ArrNode::addElm(int valtype)
 {
     if(!this->isVLA())
-        throw string("non-VLA Arr cannot add Elm");
+        throw Excep("non-VLA Arr cannot add Elm");
     if(this->typeRestrictFlag)
     {
         if(valtype!=this->valtype)
-            throw string("Element type does not match array type");
+            throw Excep("Element type does not match array type");
     }
 
     VarNode* node=new VarNode(valtype);
@@ -462,11 +462,11 @@ VarNode* ArrNode::addElm(int valtype)
 VarNode* ArrNode::addElm(VarNode *var)
 {
     if(!this->isVLA())
-        throw string("non-VLA Arr cannot add Elm");
+        throw Excep("non-VLA Arr cannot add Elm");
     if(this->typeRestrictFlag)
     {
         if(valtype!=this->valtype)
-            throw string("Element type does not match array type");
+            throw Excep("Element type does not match array type");
     }
 
     this->allelm.push_back(var);
