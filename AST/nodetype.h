@@ -30,40 +30,27 @@ typedef function<BasicNode*(vector<BasicNode*>&sonNode)>BE; //进行基础求值
 class nullNode : public BasicNode
 {
 public:
-    virtual int getType() {return Null;}
-    virtual void addNode(BasicNode*) {throw addSonExcep(Null);}
+    virtual nodeType getType() { return Null; }
+    virtual void addNode(BasicNode*) { throw addSonExcep(Null); }
     virtual BasicNode* eval() {throw cannotEvaledExcep();}
 };
 
-
-class NumNode : public BasicNode
+template<typename T, nodeType TAG>
+class PackNode : public BasicNode
 {
 protected:
-    double num;
+    T data;
 public:
-    virtual int getType() {return Num;}
-    virtual void addNode(BasicNode*) {throw addSonExcep(Num);}
-    virtual BasicNode* eval() {return this;}
-    NumNode(double num) {this->num=num;}
-    NumNode(const NumNode& n):BasicNode(n) {this->num=n.getNum();}
-
-    double getNum() const {return this->num;}
+    virtual nodeType getType() { return TAG; }
+    virtual void addNode(BasicNode*) { throw addSonExcep(TAG); }
+    virtual BasicNode* eval() { return this; }
+    PackNode(T data) : data(data) {}
+    PackNode(const T& n) : BasicNode(n), data(n.getData()) {}
+    T getData() const { return this->data; }
 };
 
-
-class StringNode : public BasicNode
-{
-protected:
-    string str;
-public:
-    virtual int getType() {return String;}
-    virtual void addNode(BasicNode*) {throw addSonExcep(String);}
-    virtual BasicNode* eval() {return this;}
-    StringNode(string str) {this->str=str;}
-    StringNode(const StringNode& n):BasicNode(n) {this->str=n.getStr();}
-
-    string getStr() const {return this->str;}
-};
+typedef PackNode<double, Num> NumNode;
+typedef PackNode<string, String> StringNode;
 
 
 class VarNode : public BasicNode

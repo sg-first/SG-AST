@@ -181,8 +181,9 @@ BasicNode* FunNode::eval()
     {
 #endif
         return this->funEntity->eval(this->sonNode);
-    }
 #ifdef PARTEVAL
+    }
+
     catch(callCheckMismatchExcep e) //因为未赋值变量未求值使得参数类型不匹配，放弃对这个函数求值
             //控制流节点对条件的求值会在此处进行，该节点放弃求值会被上层控制流节点检查到，控制流节点也会放弃求值
     {
@@ -363,7 +364,7 @@ BasicNode* IfNode::eval()
     if(recon->getType()!=Num)
         throw Excep("IfNode condition value's type mismatch");
     BasicNode* result;
-    if(dynamic_cast<NumNode*>(recon)->getNum()==0) //这里判断false
+    if(dynamic_cast<NumNode*>(recon)->getData()==0) //这里判断false
         result=this->falsePro->eval();
     else
         result=this->truePro->eval();
@@ -403,7 +404,7 @@ BasicNode* WhileNode::eval()
 
         if(recon->getType()!=Num)
             throw Excep("WhileNode condition value's type mismatch");
-        if(dynamic_cast<NumNode*>(recon)->getNum()==1) //为真继续循环
+        if(dynamic_cast<NumNode*>(recon)->getData()==1) //为真继续循环
         {
             execpro=new ProNode(*this->body);
             execpro->eval();
