@@ -40,7 +40,7 @@ public:
     virtual void addNode(BasicNode*) { throw addSonExcep(TAG); }
     virtual BasicNode* eval() { return this; }
     PackNode(T data) : data(data) {}
-    PackNode(const T& n) : BasicNode(n), data(n.getData()) {}
+    PackNode(const PackNode& n) : BasicNode(n), data(n.getData()) {}
     T getData() const { return this->data; }
 };
 
@@ -256,4 +256,11 @@ public:
     static bool isLiteral(BasicNode* node);
     static bool isLiteral(int type);
     static void delTree(BasicNode* n);
+};
+
+class evalHelp
+{
+public:
+    static void recursionEval(BasicNode*& node);
+    static nodeType typeInfer(BasicNode*& node);
 };
