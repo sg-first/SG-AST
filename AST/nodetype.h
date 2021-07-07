@@ -148,6 +148,7 @@ public:
     //fix:该节点现在可以求值，实际应该做成逗号表达式一类的结构，支持PARTEVAL。但现在pro eval完了都释放，所以没啥用
     //BasicNode* getHeadNode() {return this->sonNode.at(0);}
     BasicNode* getSen(unsigned int sub) { return this->sonNode.at(sub); }
+    virtual void addNode(BasicNode* node) { throw addSonExcep(Null); }
     void addNode(BasicNode* node, bool isRet); //ProNode用这个添加子节点才是对的
 };
 
