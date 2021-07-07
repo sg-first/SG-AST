@@ -183,7 +183,6 @@ BasicNode* FunNode::eval()
         return this->funEntity->eval(this->sonNode);
 #ifdef PARTEVAL
     }
-
     catch(callCheckMismatchExcep e) //因为未赋值变量未求值使得参数类型不匹配，放弃对这个函数求值
             //控制流节点对条件的求值会在此处进行，该节点放弃求值会被上层控制流节点检查到，控制流节点也会放弃求值
     {
@@ -298,18 +297,13 @@ void Function::bindArgument(vector<BasicNode *> &sonNode)
 
 BasicNode* ProNode::eval()
 {
-    vector<BasicNode*>&body=this->sonNode;
-    for(unsigned int i=0;i<body.size()-1;i++) //最后一个可能是返回值，先留着后面单独处理
+    vector<BasicNode*>& body = this->sonNode;
+    for (unsigned int i = 0;i < body.size();i++)
     {
         recursionEval(body.at(i));
-        if(body.at(i)->isRet())
+        if (this->isRet.at(i))
             return body.at(i);
     }
-    //前面都不是返回值，最后一个是
-    BasicNode* lastnode=body.at(body.size()-1);
-    if(lastnode->getType()!=Null)
-        recursionEval(lastnode);
-    return lastnode;
 }
 
 

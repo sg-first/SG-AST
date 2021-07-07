@@ -8,19 +8,14 @@ using namespace std;
 
 class BasicNode
 {
-protected:
-    bool retFlag=false;
 public:
-    virtual int getType()=0;
+    virtual nodeType getType()=0;
     virtual void addNode(BasicNode* node) {this->sonNode.push_back(node);} //使用该方法添加成员可查错
     virtual BasicNode* eval()=0;
     virtual ~BasicNode();
     BasicNode(const BasicNode& n);
     BasicNode(){}
 
-    //fix:这个ret的实现方法可能不太对劲
-    void setRet() {this->retFlag=true;} //不可eval节点设置ret无效
-    bool isRet() const {return this->retFlag;}
     vector<BasicNode*> sonNode;
 };
 typedef function<bool(vector<BasicNode*>&sonNode)>canBE; //检测函数基础求值参数表是否合法
@@ -143,15 +138,17 @@ typedef VarRefNode VarReference; //同上
 
 class ProNode : public BasicNode
 {
+protected:
+    vector<bool> isRet;
 public:
-    virtual int getType() {return Pro;}
+    virtual nodeType getType() { return Pro; }
     virtual BasicNode* eval();
-    ProNode(){}
-    ProNode(const ProNode& n):BasicNode(n){}
+    ProNode() {}
+    ProNode(const ProNode& n) :BasicNode(n) {}
     //fix:该节点现在可以求值，实际应该做成逗号表达式一类的结构，支持PARTEVAL。但现在pro eval完了都释放，所以没啥用
     //BasicNode* getHeadNode() {return this->sonNode.at(0);}
-    BasicNode* getSen(int sub) {return this->sonNode.at(sub);}
-    void passEffect(vector<BasicNode*>sonNode);
+    BasicNode* getSen(unsigned int sub) { return this->sonNode.at(sub); }
+    void addNode(BasicNode* node, bool isRet); //ProNode用这个添加子节点才是对的
 };
 
 
