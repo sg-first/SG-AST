@@ -46,7 +46,6 @@ void copyHelp::delTree(BasicNode *n)
 
 BasicNode::BasicNode(const BasicNode &n)
 {
-    this->retFlag=n.isRet();
     for(BasicNode* i:n.sonNode)
         this->sonNode.push_back(copyHelp::copyNode(i));
 }
