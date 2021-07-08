@@ -150,6 +150,7 @@ public:
     BasicNode* getSen(unsigned int sub) { return this->sonNode.at(sub); }
     virtual void addNode(BasicNode* node) { throw addSonExcep(Null); }
     void addNode(BasicNode* node, bool isRet); //ProNode用这个添加子节点才是对的
+    set<nodeType> getRetType();
 };
 
 
@@ -163,10 +164,14 @@ private:
     BE BEfun;
     bool iscanBE=false;
     //关于pro求值
-    ProNode* body=nullptr; //是ret节点返回，最后一个元素视为返回值（如果没有填nullNode）（fix:这个ret路子可能是错的）
+    ProNode* body=nullptr;
     vector<VarReference*>argumentList; //形参列表，持有所有权。（warn:用了这种方法将很难并行化，一个函数实体同时只能被一组实参占用）
+    
+    bool typeRestrictFlag = true; //类型检查标记（fix:相关设施还需要完善一下）
+
     void unbindArgument();
     void bindArgument(vector<BasicNode*>&sonNode);
+
 public:
     Function(ProNode* body,int parnum=-1):parnum(parnum),body(body){} //普通函数（有函数体）
     Function(canBE canBEfun,BE BEfun,int parnum=-1):
@@ -178,6 +183,7 @@ public:
     bool isVLP() {return this->parnum==-1;}
     void addArgument(VarReference* var); //先在外面new好，然后转移所有权进来
     BasicNode* eval(vector<BasicNode *> &sonNode);
+    bool istypeRestrict() const { return this->typeRestrictFlag; }
 
 #ifdef READABLEGEN
     string NAME;

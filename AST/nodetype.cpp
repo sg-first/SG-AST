@@ -37,17 +37,17 @@ VarNode::~VarNode()
     //然后BasicNode析构
 }
 
-void assignmentChecking(BasicNode *val,bool thisTypeRestrictFlag,int thisvaltype)
+void assignmentChecking(BasicNode *val,bool thisTypeRestrictFlag,nodeType thisvaltype)
 {
     if(isNotAssignable(val))
         throw cannotAssignedExcep();
-    if(thisTypeRestrictFlag&&val->getType()!=thisvaltype)
-        throw Excep("Mismatch between assignment type and variable type");
+    if (thisTypeRestrictFlag && val->getType() != thisvaltype)
+        throw callCheckMismatchExcep(TypeMisMatch);
 }
 
 void VarNode::setVal(BasicNode* val)
 {
-    assignmentChecking(val,this->typeRestrictFlag,this->getType());
+    assignmentChecking(val,this->typeRestrictFlag,this->getValType());
     this->clearVal();
     //warn:理论上讲按照目前的设计，变量不应作为具有所有权的值（因为所有权在运行时域），但在此暂不进行检查。如果进行检查，直接在此处添加
     this->valtype=val->getType();
@@ -57,7 +57,7 @@ void VarNode::setVal(BasicNode* val)
 
 void VarNode::setBorrowVal(BasicNode *val)
 {
-    assignmentChecking(val,this->typeRestrictFlag,this->getType());
+    assignmentChecking(val,this->typeRestrictFlag,this->getValType());
     this->clearVal();
     this->valtype=val->getType();
     this->ownershipFlag=false;
@@ -94,7 +94,6 @@ BasicNode* VarNode::eval()
 
 void VarNode::clearVal()
 {
-    //调用前应进行是否为空的检查，否则有所有权的情况下会delete nullptr
     if(this->ownershipFlag)
     {
         delete this->val;
@@ -209,7 +208,7 @@ bool isNotGiveupEval(BasicNode* node)
 }
 #endif
 
-void recursionEval(BasicNode* &node)
+void evalHelp::recursionEval(BasicNode* &node)
 {
     if(copyHelp::isLiteral(node))
         return; //如果是字面量，自己就是求值结果，下面再重新赋值一次就重复了
@@ -237,11 +236,23 @@ void recursionEval(BasicNode* &node)
     }
 }
 
+nodeType evalHelp::typeInfer(BasicNode*& node)
+{
+    if (copyHelp::isLiteral(node))
+        return node->getType();
+    else if (node->getType() == Fun)
+        return dynamic_cast<FunNode*>(node)->getRetType();
+    else if (node->getType() == Var)
+        return dynamic_cast<VarNode*>(node)->getValType();
+    else
+        return Null;
+}
+
 BasicNode* Function::eval(vector<BasicNode*> &sonNode)
 {
     //对所有参数求值
     for(BasicNode* &node:sonNode)
-        recursionEval(node);
+        evalHelp::recursionEval(node);
 
     //函数求值
     if(this->iscanBE) //基础求值模式
@@ -300,12 +311,24 @@ BasicNode* ProNode::eval()
     vector<BasicNode*>& body = this->sonNode;
     for (unsigned int i = 0;i < body.size();i++)
     {
-        recursionEval(body.at(i));
+        evalHelp::recursionEval(body.at(i));
         if (this->isRet.at(i))
             return body.at(i);
     }
+    return nullptr;
 }
 
+set<nodeType> ProNode::getRetType()
+{
+    set<nodeType> result;
+    vector<BasicNode*>& body = this->sonNode;
+    for (unsigned int i = 0;i < body.size();i++)
+    {
+        if (this->isRet.at(i))
+            result.insert(evalHelp::typeInfer(body.at(i)));
+    }
+    return result;
+}
 
 BasicNode* conditionalControlNode::evalCondition()
 {
