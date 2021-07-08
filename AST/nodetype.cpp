@@ -160,9 +160,13 @@ void VarRefNode::bind(BasicNode *val)
 void FunNode::addNode(BasicNode *node)
 {
     if(!this->funEntity->isVLP()) //支持变长参数就先不进行参数个数检查
+    {
         if(this->sonNode.size()+1>this->funEntity->getParnum())
             throw parameterNumExceedingExcep();
-
+    }
+    if(!this->funEntity->istypeRestrict())
+        if (this->getParType()[sonNode.size()] != evalHelp::typeInfer(node)) //类型检查
+            throw callCheckMismatchExcep(TypeMisMatch);
     this->sonNode.push_back(node);
 }
 
