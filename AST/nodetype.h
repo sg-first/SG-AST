@@ -9,7 +9,7 @@ using namespace std;
 class BasicNode
 {
 public:
-    virtual nodeType getType()=0;
+    virtual nodeType getType() const=0;
     virtual void addNode(BasicNode* node) {this->sonNode.push_back(node);} //使用该方法添加成员可查错
     virtual BasicNode* eval()=0;
     virtual ~BasicNode();
@@ -25,7 +25,7 @@ typedef function<BasicNode*(vector<BasicNode*>&sonNode)>BE; //进行基础求值
 class nullNode : public BasicNode
 {
 public:
-    virtual nodeType getType() { return Null; }
+    virtual nodeType getType() const { return Null; }
     virtual void addNode(BasicNode*) { throw addSonExcep(Null); }
     virtual BasicNode* eval() {throw cannotEvaledExcep();}
 };
@@ -36,7 +36,7 @@ class PackNode : public BasicNode
 protected:
     T data;
 public:
-    virtual nodeType getType() { return TAG; }
+    virtual nodeType getType() const { return TAG; }
     virtual void addNode(BasicNode*) { throw addSonExcep(TAG); }
     virtual BasicNode* eval() { return this; }
     PackNode(T data) : data(data) {}
@@ -45,6 +45,7 @@ public:
 };
 
 typedef PackNode<double, Num> NumNode;
+typedef PackNode<bool, Bool> BoolNode;
 typedef PackNode<string, String> StringNode;
 
 
@@ -57,7 +58,7 @@ protected:
     bool ownershipFlag;
 
 public:
-    virtual int getType() {return Var;}
+    virtual int getType() const {return Var;}
     virtual void addNode(BasicNode*) {throw addSonExcep(Var);}
     virtual BasicNode* eval(); //字面量会拷贝
     virtual ~VarNode();
@@ -89,7 +90,7 @@ protected:
 
     void clearArray(); //这个暂时调整成私有
 public:
-    virtual int getType() {return Arr;}
+    virtual int getType() const {return Arr;}
     virtual void addNode(BasicNode*) {throw addSonExcep(Arr);}
     virtual BasicNode* eval() {return this;}
     virtual ~ArrNode() {this->clearArray();}
@@ -122,7 +123,7 @@ protected:
     void setVal(BasicNode* val);
     void setBorrowVal(BasicNode* val);
 public:
-    virtual int getType() {return VarRef;}
+    virtual int getType() const {return VarRef;}
     virtual void addNode(BasicNode*) {throw addSonExcep(VarRef);}
     virtual ~VarRefNode();
     virtual BasicNode* eval(); //eval结果是目前形参绑定到的实参
@@ -141,14 +142,14 @@ class ProNode : public BasicNode
 protected:
     vector<bool> isRet;
 public:
-    virtual nodeType getType() { return Pro; }
+    virtual nodeType getType() const { return Pro; }
     virtual BasicNode* eval();
     ProNode() {}
     ProNode(const ProNode& n) :BasicNode(n) {}
     //fix:该节点现在可以求值，实际应该做成逗号表达式一类的结构，支持PARTEVAL。但现在pro eval完了都释放，所以没啥用
     //BasicNode* getHeadNode() {return this->sonNode.at(0);}
     BasicNode* getSen(unsigned int sub) { return this->sonNode.at(sub); }
-    virtual void addNode(BasicNode* node) { throw addSonExcep(Null); }
+    virtual void addNode(BasicNode* node) { throw addSonExcep(Pro); }
     void addNode(BasicNode* node, bool isRet); //ProNode用这个添加子节点才是对的
     set<nodeType> getRetType();
 };
@@ -196,10 +197,10 @@ class FunNode : public BasicNode
 protected:
     Function* funEntity; //所有权在scope，不在这里析构
 public:
-    virtual int getType() {return Fun;}
+    virtual int getType() const {return Fun;}
     virtual void addNode(BasicNode* node);
     virtual BasicNode* eval();
-    FunNode(Function* funEntity=nullptr):funEntity(funEntity){}
+    FunNode(Function* funEntity):funEntity(funEntity){}
     FunNode(const FunNode& n):BasicNode(n) {this->funEntity=n.funEntity;} //函数实体所有权不在此，所以可以放心不复制
 
     bool haveEntity() {return this->funEntity!=nullptr;}
@@ -227,18 +228,14 @@ public:
 #endif
 };
 
-class IfNode : public conditionalControlNode
+class IfNode : public BasicNode
 {
-protected:
-    ProNode* truePro;
-    ProNode* falsePro;
 public:
-    virtual int getType() {return If;}
-    virtual void addNode(BasicNode*) {throw addSonExcep(If);}
+    virtual nodeType getType() const { return If; }
+    set<nodeType> getRetType();
+    virtual void addNode(BasicNode*) { throw addSonExcep(If); }
     virtual BasicNode* eval();
-    IfNode(const IfNode& n);
-    IfNode(BasicNode* condition,ProNode* truePro,ProNode* falsePro):conditionalControlNode(condition),truePro(truePro),falsePro(falsePro){}
-    virtual ~IfNode();
+    IfNode(BasicNode* condition, BasicNode* truePro, BasicNode* falsePro);
 };
 
 class WhileNode : public conditionalControlNode
@@ -246,7 +243,7 @@ class WhileNode : public conditionalControlNode
 protected:
     ProNode* body;
 public:
-    virtual int getType() {return While;}
+    virtual int getType() const {return While;}
     virtual void addNode(BasicNode*) {throw addSonExcep(While);}
     virtual BasicNode* eval(); //该类的eval不求值（返回NullNode），只通过循环本身产生副作用
     WhileNode(const WhileNode& n);
@@ -259,14 +256,16 @@ class copyHelp
 public:
     static BasicNode* copyNode(BasicNode* node);
     static BasicNode* copyVal(BasicNode* node);
-    static bool isLiteral(BasicNode* node);
-    static bool isLiteral(int type);
+    static bool isLiteral(const BasicNode* node) { return copyHelp::isLiteral(node->getType()); }
+    static bool isLiteral(nodeType type) { return (type == Num || type == String || type == Bool); } //warn:添加新的字面量要进行修改
     static void delTree(BasicNode* n);
+    static void delLiteral(BasicNode* n);
 };
 
 class evalHelp
 {
 public:
-    static void recursionEval(BasicNode*& node);
+    static BasicNode* literalCopyEval(BasicNode* node);
     static nodeType typeInfer(BasicNode*& node);
+    static set<nodeType> unionTypeInfer(BasicNode*& node);
 };

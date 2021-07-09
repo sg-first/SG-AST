@@ -7,6 +7,8 @@ BasicNode* copyHelp::copyVal(BasicNode* node) //（值类型）拷贝
         return new NumNode(*dynamic_cast<NumNode*>(node));
     if(node->getType()==String)
         return new StringNode(*dynamic_cast<StringNode*>(node));
+    if (node->getType() == Bool)
+        return new BoolNode(*dynamic_cast<BoolNode*>(node));
     if(node->getType()==Arr)
         return new ArrNode(*dynamic_cast<ArrNode*>(node));
     if(node->getType()==Null)
@@ -44,17 +46,18 @@ void copyHelp::delTree(BasicNode *n)
     }
 }
 
+void copyHelp::delLiteral(BasicNode* n)
+{
+    if (n == nullptr)
+        return;
+    else if (copyHelp::isLiteral(n))
+        delete n;
+}
+
 BasicNode::BasicNode(const BasicNode &n)
 {
     for(BasicNode* i:n.sonNode)
         this->sonNode.push_back(copyHelp::copyNode(i));
-}
-
-IfNode::IfNode(const IfNode &n):conditionalControlNode(n)
-{
-    this->condition=copyHelp::copyNode(n.condition);
-    this->truePro=new ProNode(*(n.truePro));
-    this->falsePro=new ProNode(*(n.falsePro));
 }
 
 WhileNode::WhileNode(const WhileNode &n):conditionalControlNode(n)
