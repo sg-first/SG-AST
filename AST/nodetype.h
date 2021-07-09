@@ -238,17 +238,13 @@ public:
     IfNode(BasicNode* condition, BasicNode* truePro, BasicNode* falsePro);
 };
 
-class WhileNode : public conditionalControlNode
+class WhileNode
 {
-protected:
-    ProNode* body;
 public:
     virtual int getType() const {return While;}
     virtual void addNode(BasicNode*) {throw addSonExcep(While);}
     virtual BasicNode* eval(); //该类的eval不求值（返回NullNode），只通过循环本身产生副作用
-    WhileNode(const WhileNode& n);
-    WhileNode(BasicNode* condition,ProNode* body):conditionalControlNode(condition),body(body){}
-    virtual ~WhileNode();
+    WhileNode(BasicNode* condition, BasicNode* body);
 };
 
 class copyHelp

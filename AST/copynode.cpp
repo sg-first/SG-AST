@@ -60,12 +60,6 @@ BasicNode::BasicNode(const BasicNode &n)
         this->sonNode.push_back(copyHelp::copyNode(i));
 }
 
-WhileNode::WhileNode(const WhileNode &n):conditionalControlNode(n)
-{
-    this->condition=copyHelp::copyNode(n.condition);
-    this->body=new ProNode(*(n.body));
-}
-
 VarNode::VarNode(VarNode &n):BasicNode(n)
 {
     this->typeRestrictFlag=n.istypeRestrict();

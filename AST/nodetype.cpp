@@ -317,9 +317,9 @@ set<nodeType> ProNode::getRetType()
 IfNode::IfNode(BasicNode* condition, BasicNode* truePro, BasicNode* falsePro)
 {
     if(evalHelp::typeInfer(condition)!=Bool)
-        throw Excep("IfNode condition value's type must be Bool");
+        throw Excep("IfNode condition's type must be Bool");
     else if(truePro->getType()!=Pro || falsePro->getType()!=Pro)
-        throw Excep("IfNode true/falsePro value's type must be Pro");
+        throw Excep("IfNode true/falsePro's type must be Pro");
     else
     {
         BasicNode::addNode(condition);
@@ -363,6 +363,19 @@ set<nodeType> IfNode::getRetType()
     return result;
 }
 
+WhileNode::WhileNode(BasicNode* condition, BasicNode* body)
+{
+    if(evalHelp::typeInfer(condition)!=Bool)
+        throw Excep("whileNode condition's type must be Bool");
+    else if(body->getType()!=Pro)
+        throw Excep("whileNode body's type must be Pro");
+    else
+    {
+        BasicNode::addNode(condition);
+        BasicNode::addNode(body);
+    }
+}
+
 BasicNode* WhileNode::eval()
 {
     ProNode* execpro;
@@ -397,12 +410,6 @@ BasicNode* WhileNode::eval()
             break;
     }
     return new nullNode();
-}
-
-WhileNode::~WhileNode()
-{
-    delete this->condition;
-    delete this->body;
 }
 
 
